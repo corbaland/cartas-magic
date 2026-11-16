@@ -42,8 +42,12 @@
     z-index: 5;
     background: var(--bg);
     border-bottom: 1px solid var(--border);
-    padding: 14px 16px;
+    height: 58px;
+    padding: 0 16px;
+    display: flex;
+    align-items: center;
   }
+  header .bar { width: 100%; flex-wrap: nowrap; }
   .bar {
     max-width: 1300px;
     margin: 0 auto;
@@ -52,12 +56,15 @@
     gap: 10px;
     align-items: center;
   }
-  h1 {
+  .brand {
     font-size: 1.15rem;
+    font-weight: 700;
     margin: 0 8px 0 0;
     white-space: nowrap;
+    color: var(--text);
+    text-decoration: none;
   }
-  h1 span { color: var(--accent); }
+  .brand span { color: var(--accent); }
   input[type="search"], select {
     font: inherit;
     color: var(--text);
@@ -134,7 +141,7 @@
     outline: 2px solid var(--accent);
     outline-offset: 1px;
   }
-  main { max-width: 1300px; margin: 0 auto; padding: 16px; }
+  .page { max-width: 1300px; margin: 0 auto; padding: 16px; }
   #status { color: var(--muted); margin: 0 0 14px; min-height: 1.4em; }
   #grid {
     display: grid;
@@ -233,14 +240,269 @@
   .editions th:not(:first-child), .editions td:not(:first-child) { text-align: right; padding-left: 12px; white-space: nowrap; }
   .editions td:not(:first-child) { font-weight: 600; }
   .editions td small { color: var(--muted); font-weight: 400; }
+
+  /* ---------- Navegación entre secciones ---------- */
+  [hidden] { display: none !important; }
+  :root { --danger: #ff6b6b; }
+  @media (prefers-color-scheme: light) { :root { --danger: #c62828; } }
+  nav { display: flex; gap: 4px; margin-left: auto; }
+  nav a {
+    padding: 7px 12px;
+    border-radius: 8px;
+    color: var(--muted);
+    text-decoration: none;
+    font-weight: 600;
+    font-size: .95rem;
+  }
+  nav a:hover { color: var(--text); background: var(--panel); }
+  nav a[aria-current="page"] { color: var(--accent); background: var(--panel); }
+  nav a:focus-visible, .brand:focus-visible, input[type="text"]:focus { outline: 2px solid var(--accent); outline-offset: 1px; }
+  .tools {
+    position: sticky;
+    top: 58px;
+    z-index: 4;
+    background: var(--bg);
+    border-bottom: 1px solid var(--border);
+    padding: 12px 16px;
+  }
+
+  /* ---------- Inicio ---------- */
+  .hero {
+    --gold-1: #ffe9a8;
+    --gold-2: #d99a1c;
+    position: relative;
+    overflow: hidden;
+    min-height: calc(100vh - 58px);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 34px;
+    padding: 48px 16px;
+    text-align: center;
+    background:
+      radial-gradient(ellipse at 12% 18%, rgba(248, 241, 201, .10), transparent 42%),
+      radial-gradient(ellipse at 88% 14%, rgba(74, 163, 224, .14), transparent 44%),
+      radial-gradient(ellipse at 50% 108%, rgba(154, 134, 184, .16), transparent 50%),
+      radial-gradient(ellipse at 6% 88%, rgba(63, 174, 106, .13), transparent 42%),
+      radial-gradient(ellipse at 94% 86%, rgba(232, 85, 62, .13), transparent 42%);
+  }
+  @media (prefers-color-scheme: light) { .hero { --gold-1: #b9790a; --gold-2: #7a4d00; } }
+  .hero h1 {
+    position: relative;
+    margin: 0;
+    font-family: "Palatino Linotype", Palatino, "Book Antiqua", Georgia, serif;
+    font-size: clamp(2.3rem, 7.2vw, 5.2rem);
+    font-weight: 700;
+    letter-spacing: .02em;
+    line-height: 1.1;
+    text-wrap: balance;
+    color: var(--accent);
+    background: linear-gradient(180deg, var(--gold-1), var(--gold-2));
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    filter: drop-shadow(0 4px 22px rgba(224, 165, 38, .28));
+    animation: rise .8s ease-out .3s both;
+  }
+  .mana { position: relative; display: flex; gap: clamp(10px, 3vw, 26px); }
+  .mana img {
+    width: clamp(44px, 9vw, 76px);
+    aspect-ratio: 1;
+    border-radius: 50%;
+    box-shadow: 0 0 0 1px rgba(0, 0, 0, .25), 0 0 34px var(--glow);
+    animation: pop .6s cubic-bezier(.2, 1.4, .4, 1) both, float 5s ease-in-out infinite;
+    animation-delay: calc(var(--i) * .09s), calc(var(--i) * -.9s);
+  }
+  .orn { position: relative; display: flex; align-items: center; gap: 14px; color: var(--accent); animation: rise .8s ease-out .5s both; }
+  .orn::before, .orn::after {
+    content: "";
+    width: clamp(60px, 16vw, 180px);
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--accent));
+  }
+  .orn::after { transform: scaleX(-1); }
+  .hero-bg img {
+    position: absolute;
+    width: var(--s);
+    aspect-ratio: 1;
+    opacity: .07;
+    filter: grayscale(1);
+    animation: float 9s ease-in-out infinite;
+    animation-delay: var(--d);
+  }
+  @keyframes pop { from { opacity: 0; scale: .4; } }
+  @keyframes float { 50% { translate: 0 -10px; } }
+  @keyframes rise { from { opacity: 0; transform: translateY(14px); } }
+
+  /* ---------- Mazos ---------- */
+  .decks { display: grid; grid-template-columns: 250px minmax(0, 1fr); gap: 20px; align-items: start; }
+  @media (max-width: 800px) { .decks { grid-template-columns: minmax(0, 1fr); } }
+  .deck-side, .counter, .adder, .sec, .deck-empty {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+  }
+  .deck-side { padding: 14px; }
+  .side-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 10px; }
+  .side-head h2 { margin: 0; font-size: 1rem; }
+  .side-head .plain { padding: 7px 10px; font-size: .88rem; }
+  #deckList { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 4px; }
+  #deckList button {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    padding: 9px 10px;
+    border: 1px solid transparent;
+    border-radius: 8px;
+    background: none;
+    color: inherit;
+    font: inherit;
+    text-align: left;
+    cursor: pointer;
+  }
+  #deckList button:hover { background: var(--panel-2); }
+  #deckList button.on { border-color: var(--accent); background: var(--panel-2); }
+  #deckList span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  #deckList small { color: var(--muted); font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .note { color: var(--muted); font-size: .8rem; margin: 10px 0 0; }
+  .deck-empty { padding: 40px 20px; text-align: center; }
+  .deck-empty p { margin: 0 0 14px; color: var(--muted); }
+  .deck-head { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 12px; }
+  #deckName {
+    flex: 1 1 220px;
+    min-width: 0;
+    font: inherit;
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--text);
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 9px 12px;
+  }
+  button.danger { color: var(--danger); }
+  button.danger:hover { border-color: var(--danger); }
+  .counter { position: sticky; top: 66px; z-index: 3; padding: 12px 14px; margin-bottom: 12px; box-shadow: 0 6px 18px rgba(0, 0, 0, .18); }
+  .counter-top { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 16px; }
+  .counter strong { font-size: 1.5rem; font-variant-numeric: tabular-nums; }
+  .counter span { color: var(--muted); font-size: .9rem; }
+  .meter { height: 8px; border-radius: 99px; background: var(--panel-2); overflow: hidden; margin-top: 8px; }
+  .meter div { height: 100%; border-radius: 99px; background: var(--accent); transition: width .2s; }
+  .counter.full strong { color: var(--good); }
+  .counter.full .meter div { background: var(--good); }
+  .adder { padding: 12px 14px; margin-bottom: 16px; }
+  .adder-row { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
+  .adder-row input[type="search"] { flex: 1 1 240px; width: auto; min-width: 0; }
+  .check { display: flex; align-items: center; gap: 6px; color: var(--muted); font-size: .9rem; white-space: nowrap; cursor: pointer; }
+  #deckMsg { margin: 8px 0 0; min-height: 1.4em; font-size: .9rem; color: var(--good); }
+  #deckMsg.bad { color: var(--danger); }
+  #addResults { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 10px; margin-top: 8px; max-height: 340px; overflow-y: auto; overscroll-behavior: contain; scrollbar-width: thin; }
+  #addResults:empty { display: none; }
+  .pick { display: flex; flex-direction: column; gap: 5px; }
+  .pick img { width: 100%; aspect-ratio: 488 / 680; border-radius: 4.75% / 3.5%; background: var(--panel-2); display: block; }
+  .pick .nm { font-size: .8rem; font-weight: 600; overflow-wrap: anywhere; }
+  .pick .tp { font-size: .72rem; color: var(--muted); }
+  .pick .btns { display: flex; flex-direction: column; gap: 4px; margin-top: auto; }
+  .pick button {
+    font: inherit;
+    font-size: .8rem;
+    padding: 6px 8px;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    background: var(--panel-2);
+    color: var(--text);
+    cursor: pointer;
+  }
+  .pick button:hover { border-color: var(--accent); color: var(--accent); }
+  #deckSections { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 14px; align-items: start; }
+  .sec { padding: 12px; }
+  .sec.cmd { border-color: var(--accent); }
+  .sec h3 { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; margin: 0 0 8px; font-size: .95rem; }
+  .sec h3 small { color: var(--muted); font-weight: 400; }
+  .sec ul { list-style: none; margin: 0; padding: 0; }
+  .sec .note { margin: 0; }
+  .row { display: flex; align-items: center; gap: 8px; padding: 5px 0; border-top: 1px solid var(--border); }
+  .row img { flex: none; width: 30px; aspect-ratio: 488 / 680; border-radius: 3px; background: var(--panel-2); }
+  .row .nm {
+    flex: 1;
+    min-width: 0;
+    padding: 0;
+    border: 0;
+    background: none;
+    color: inherit;
+    font: inherit;
+    text-align: left;
+    cursor: pointer;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .row .nm:hover { color: var(--accent); }
+  .row .eur { color: var(--muted); font-size: .8rem; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .row .qty { min-width: 1.4em; text-align: center; font-size: .9rem; font-variant-numeric: tabular-nums; }
+  .ico {
+    flex: none;
+    width: 26px;
+    height: 26px;
+    display: grid;
+    place-items: center;
+    padding: 0;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    background: none;
+    color: var(--muted);
+    font: inherit;
+    line-height: 1;
+    cursor: pointer;
+  }
+  .ico:hover { color: var(--accent); border-color: var(--accent); }
+  .ico.del:hover { color: var(--danger); border-color: var(--danger); }
+  @media (prefers-reduced-motion: reduce) {
+    .hero h1, .orn, .mana img, .hero-bg img { animation: none; }
+    .meter div { transition: none; }
+  }
 </style>
 </head>
 <body>
 <header>
   <div class="bar">
-    <h1>Cartas <span>Magic</span></h1>
+    <a class="brand" href="#inicio">Cartas <span>Magic</span></a>
+    <nav aria-label="Secciones">
+      <a href="#inicio" data-view="inicio">Inicio</a>
+      <a href="#cartas" data-view="cartas">Cartas</a>
+      <a href="#mazos" data-view="mazos">Mazos</a>
+    </nav>
+  </div>
+</header>
+
+<section id="view-inicio" class="hero">
+  <div class="hero-bg" aria-hidden="true">
+    <img src="https://svgs.scryfall.io/card-symbols/T.svg" alt="" style="--s:120px; --d:-1s; left:6%; top:14%">
+    <img src="https://svgs.scryfall.io/card-symbols/C.svg" alt="" style="--s:90px; --d:-4s; right:9%; top:20%">
+    <img src="https://svgs.scryfall.io/card-symbols/S.svg" alt="" style="--s:70px; --d:-2s; left:20%; bottom:12%">
+    <img src="https://svgs.scryfall.io/card-symbols/E.svg" alt="" style="--s:110px; --d:-6s; right:16%; bottom:10%">
+    <img src="https://svgs.scryfall.io/card-symbols/X.svg" alt="" style="--s:56px; --d:-3s; left:38%; top:8%">
+    <img src="https://svgs.scryfall.io/card-symbols/Q.svg" alt="" style="--s:64px; --d:-7s; right:36%; bottom:6%">
+  </div>
+  <div class="mana" aria-hidden="true">
+    <img src="https://svgs.scryfall.io/card-symbols/W.svg" alt="" style="--i:0; --glow:rgba(248,241,201,.55)">
+    <img src="https://svgs.scryfall.io/card-symbols/U.svg" alt="" style="--i:1; --glow:rgba(74,163,224,.6)">
+    <img src="https://svgs.scryfall.io/card-symbols/B.svg" alt="" style="--i:2; --glow:rgba(154,134,184,.6)">
+    <img src="https://svgs.scryfall.io/card-symbols/R.svg" alt="" style="--i:3; --glow:rgba(232,85,62,.6)">
+    <img src="https://svgs.scryfall.io/card-symbols/G.svg" alt="" style="--i:4; --glow:rgba(63,174,106,.6)">
+  </div>
+  <h1>Bienvenidos a la Magia</h1>
+  <div class="orn" aria-hidden="true">◆</div>
+</section>
+
+<section id="view-cartas" hidden>
+<div class="tools">
+  <div class="bar">
     <div class="search">
-      <input id="q" type="search" placeholder="Busca por nombre (en inglés), p. ej. Lightning Bolt" autocomplete="off" autofocus aria-label="Buscar carta por nombre" aria-autocomplete="list" aria-controls="sug">
+      <input id="q" type="search" placeholder="Busca por nombre (en inglés), p. ej. Lightning Bolt" autocomplete="off" aria-label="Buscar carta por nombre" aria-autocomplete="list" aria-controls="sug">
       <div id="sug" hidden>
         <ul id="sugList" role="listbox" aria-label="Sugerencias"></ul>
         <div id="sugPreview" aria-hidden="true"></div>
@@ -254,13 +516,51 @@
       <option value="released:desc">Más recientes</option>
     </select>
   </div>
-</header>
+</div>
 
-<main>
+<div class="page">
   <p id="status" role="status" aria-live="polite"></p>
   <div id="grid"></div>
   <div id="more"></div>
-</main>
+</div>
+</section>
+
+<section id="view-mazos" hidden>
+<div class="page decks">
+  <aside class="deck-side">
+    <div class="side-head">
+      <h2>Mis mazos</h2>
+      <button id="deckNew" class="plain" type="button">+ Nuevo mazo</button>
+    </div>
+    <ul id="deckList"></ul>
+    <p class="note">Formato Commander. Los mazos se guardan en este navegador.</p>
+  </aside>
+
+  <div>
+    <div id="deckEmpty" class="deck-empty">
+      <p>Aún no tienes ningún mazo.</p>
+      <button id="deckFirst" class="plain" type="button">Crear mi primer mazo</button>
+    </div>
+
+    <div id="deckEditor" hidden>
+      <div class="deck-head">
+        <input id="deckName" type="text" maxlength="60" aria-label="Nombre del mazo">
+        <button id="deckDelete" class="plain danger" type="button">Eliminar mazo</button>
+      </div>
+      <div id="deckCounter" class="counter" role="status" aria-live="polite"></div>
+      <div class="adder">
+        <div class="adder-row">
+          <input id="addQ" type="search" placeholder="Añadir carta por nombre (en inglés)" autocomplete="off" aria-label="Buscar carta para añadir al mazo">
+          <label class="check"><input id="addTokens" type="checkbox"> Buscar tokens</label>
+        </div>
+        <p id="deckMsg" role="status" aria-live="polite"></p>
+        <div id="addResults"></div>
+      </div>
+      <div id="deckSections"></div>
+    </div>
+  </div>
+</div>
+</section>
 
 <footer>
   Datos, imágenes y precios servidos por <a href="https://scryfall.com" target="_blank" rel="noopener">Scryfall</a>
@@ -742,7 +1042,441 @@
     if (entries[0].isIntersecting && nextUrl && !loading) load(false);
   }, { rootMargin: '600px' }).observe($more);
 
-  load(true);
+  /* ---------- Mazos (formato Commander) ---------- */
+
+  var STORE = 'cartas-magic.mazos';
+  var LIMIT = 100;
+  var FULL = 'El mazo ya tiene ' + LIMIT + ' cartas. Quita alguna para añadir otra.';
+  // Orden en que se muestran. Los tokens no cuentan para el límite.
+  var SECTIONS = [
+    ['comandante', 'Comandante'],
+    ['criaturas', 'Criaturas'],
+    ['hechizos', 'Hechizos'],
+    ['artefactos', 'Artefactos'],
+    ['instantaneos', 'Instantáneos'],
+    ['encantamientos', 'Encantamientos'],
+    ['tierras', 'Tierras'],
+    ['tokens', 'Tokens']
+  ];
+  var EMPTY = {
+    comandante: 'Busca una criatura legendaria y pulsa «★ Comandante».',
+    tokens: 'Marca «Buscar tokens» para añadirlos.'
+  };
+
+  var $deckList = document.getElementById('deckList');
+  var $deckEmpty = document.getElementById('deckEmpty');
+  var $deckEditor = document.getElementById('deckEditor');
+  var $deckName = document.getElementById('deckName');
+  var $deckCounter = document.getElementById('deckCounter');
+  var $deckMsg = document.getElementById('deckMsg');
+  var $deckSections = document.getElementById('deckSections');
+  var $addQ = document.getElementById('addQ');
+  var $addTokens = document.getElementById('addTokens');
+  var $addResults = document.getElementById('addResults');
+
+  var decks = readDecks();
+  var currentId = decks.length ? decks[0].id : null;
+
+  function readDecks() {
+    try {
+      var v = JSON.parse(localStorage.getItem(STORE));
+      return Array.isArray(v) ? v.filter(function (d) { return d && d.id && Array.isArray(d.cards); }) : [];
+    } catch (err) {
+      return [];
+    }
+  }
+
+  function saveDecks() {
+    try {
+      localStorage.setItem(STORE, JSON.stringify(decks));
+      return true;
+    } catch (err) {
+      return false;
+    }
+  }
+
+  function currentDeck() {
+    return decks.find(function (d) { return d.id === currentId; }) || null;
+  }
+
+  function countCards(deck) {
+    return deck.cards.reduce(function (n, c) { return c.sec === 'tokens' ? n : n + c.qty; }, 0);
+  }
+
+  function say(msg, bad) {
+    $deckMsg.textContent = msg || '';
+    $deckMsg.classList.toggle('bad', !!bad);
+  }
+
+  // Guarda, repinta y deja un mensaje.
+  function commit(msg) {
+    var ok = saveDecks();
+    renderDecks();
+    if (ok) say(msg);
+    else say('No se ha podido guardar el mazo en este navegador.', true);
+  }
+
+  // En cartas de dos caras manda la cara frontal.
+  function frontType(card) {
+    return (card.type_line || (card.card_faces && card.card_faces[0].type_line) || '').split(' // ')[0];
+  }
+
+  function sectionFor(card) {
+    var t = frontType(card);
+    if (/token|emblem/.test(card.layout || '') || /\bToken\b/.test(t)) return 'tokens';
+    if (/\bCreature\b/.test(t)) return 'criaturas';
+    if (/\bLand\b/.test(t)) return 'tierras';
+    if (/\bInstant\b/.test(t)) return 'instantaneos';
+    if (/\bSorcery\b/.test(t)) return 'hechizos';
+    if (/\bArtifact\b/.test(t)) return 'artefactos';
+    if (/\bEnchantment\b/.test(t)) return 'encantamientos';
+    return 'hechizos';   // planeswalkers y batallas no tienen sección propia
+  }
+
+  function canCommand(card) {
+    var t = frontType(card);
+    var text = card.oracle_text || (card.card_faces && card.card_faces[0].oracle_text) || '';
+    return (/\bLegendary\b/.test(t) && /\bCreature\b/.test(t)) || /can be your commander/i.test(text);
+  }
+
+  // Lo mínimo de cada carta que se guarda en el mazo.
+  function slim(card) {
+    var sec = sectionFor(card);
+    return {
+      id: card.id,
+      name: card.name,
+      type: frontType(card),
+      sec: sec,
+      home: sec,          // sección a la que vuelve si deja de ser comandante
+      qty: 1,
+      img: image(card, 'small'),
+      eur: card.prices ? (card.prices.eur || card.prices.eur_foil || null) : null,
+      cmd: sec !== 'tokens' && canCommand(card),
+      basic: /\bBasic\b/.test(frontType(card))
+    };
+  }
+
+  function makeCommander(deck, entry) {
+    deck.cards.forEach(function (c) { if (c.sec === 'comandante') c.sec = c.home; });
+    entry.sec = 'comandante';
+    entry.qty = 1;
+  }
+
+  function addCard(card, asCommander) {
+    var deck = currentDeck();
+    if (!deck) return;
+    var c = slim(card);
+
+    if (c.sec === 'tokens') {
+      var tk = deck.cards.find(function (x) { return x.sec === 'tokens' && x.id === c.id; });
+      if (tk) tk.qty++;
+      else deck.cards.push(c);
+      commit('Token añadido: ' + c.name + '.');
+      return;
+    }
+
+    var same = deck.cards.find(function (x) { return x.sec !== 'tokens' && x.name === c.name; });
+    if (same) {
+      if (asCommander) {
+        makeCommander(deck, same);
+        commit(c.name + ' es ahora el comandante.');
+      } else if (!same.basic) {
+        say('«' + c.name + '» ya está en el mazo: en Commander solo se permite una copia.', true);
+      } else if (countCards(deck) >= LIMIT) {
+        say(FULL, true);
+      } else {
+        same.qty++;
+        commit('Añadida otra copia de ' + c.name + '.');
+      }
+      return;
+    }
+
+    if (countCards(deck) >= LIMIT) { say(FULL, true); return; }
+    deck.cards.push(c);
+    if (asCommander) {
+      makeCommander(deck, c);
+      commit(c.name + ' es ahora el comandante.');
+    } else {
+      var label = SECTIONS.find(function (s) { return s[0] === c.sec; })[1];
+      commit('Añadida a ' + label + ': ' + c.name + '.');
+    }
+  }
+
+  function removeEntry(deck, entry) {
+    deck.cards.splice(deck.cards.indexOf(entry), 1);
+  }
+
+  async function openById(id) {
+    try {
+      var res = await fetch('https://api.scryfall.com/cards/' + encodeURIComponent(id));
+      if (!res.ok) throw new Error('HTTP ' + res.status);
+      openDetail(await res.json());
+    } catch (err) {
+      say('No se ha podido abrir la carta.', true);
+    }
+  }
+
+  function icon(text, label, cls, fn) {
+    var b = el('button', 'ico' + (cls ? ' ' + cls : ''), text);
+    b.type = 'button';
+    b.title = label;
+    b.setAttribute('aria-label', label);
+    b.addEventListener('click', fn);
+    return b;
+  }
+
+  function renderRow(deck, c) {
+    var li = el('li', 'row');
+    if (c.img) {
+      var im = el('img');
+      im.loading = 'lazy';
+      im.alt = '';
+      im.src = c.img;
+      li.appendChild(im);
+    }
+    var nm = el('button', 'nm', c.name);
+    nm.type = 'button';
+    nm.title = c.type;
+    nm.addEventListener('click', function () { openById(c.id); });
+    li.appendChild(nm);
+
+    if (c.eur != null && c.sec !== 'tokens') li.appendChild(el('span', 'eur', eur.format(Number(c.eur) * c.qty)));
+
+    // Solo las tierras básicas y los tokens admiten varias copias.
+    if (c.basic || c.sec === 'tokens') {
+      li.appendChild(icon('−', 'Quitar una copia de ' + c.name, null, function () {
+        c.qty--;
+        if (c.qty < 1) removeEntry(deck, c);
+        commit('');
+      }));
+      li.appendChild(el('span', 'qty', String(c.qty)));
+      li.appendChild(icon('+', 'Añadir otra copia de ' + c.name, null, function () {
+        if (c.sec !== 'tokens' && countCards(deck) >= LIMIT) { say(FULL, true); return; }
+        c.qty++;
+        commit('');
+      }));
+    }
+    if (c.cmd && c.sec !== 'comandante') {
+      li.appendChild(icon('★', 'Hacer comandante a ' + c.name, null, function () {
+        makeCommander(deck, c);
+        commit(c.name + ' es ahora el comandante.');
+      }));
+    }
+    li.appendChild(icon('✕', 'Quitar ' + c.name + ' del mazo', 'del', function () {
+      removeEntry(deck, c);
+      commit('Quitada: ' + c.name + '.');
+    }));
+    return li;
+  }
+
+  function renderDecks() {
+    $deckList.textContent = '';
+    decks.forEach(function (d) {
+      var li = el('li');
+      var b = el('button', d.id === currentId ? 'on' : null);
+      b.type = 'button';
+      b.appendChild(el('span', null, d.name || 'Mazo sin nombre'));
+      b.appendChild(el('small', null, countCards(d) + '/' + LIMIT));
+      b.addEventListener('click', function () {
+        currentId = d.id;
+        $addQ.value = '';
+        $addResults.textContent = '';
+        say('');
+        renderDecks();
+      });
+      li.appendChild(b);
+      $deckList.appendChild(li);
+    });
+
+    var deck = currentDeck();
+    $deckEmpty.hidden = !!deck;
+    $deckEditor.hidden = !deck;
+    if (!deck) return;
+
+    if (document.activeElement !== $deckName) $deckName.value = deck.name;
+
+    // Contador
+    var n = countCards(deck);
+    var tokens = deck.cards.reduce(function (t, c) { return c.sec === 'tokens' ? t + c.qty : t; }, 0);
+    var value = deck.cards.reduce(function (t, c) {
+      return c.sec === 'tokens' || c.eur == null ? t : t + Number(c.eur) * c.qty;
+    }, 0);
+    $deckCounter.textContent = '';
+    $deckCounter.classList.toggle('full', n >= LIMIT);
+    var top = el('div', 'counter-top');
+    top.appendChild(el('strong', null, n + ' / ' + LIMIT));
+    top.appendChild(el('span', null, n >= LIMIT ? 'Mazo completo' : n === LIMIT - 1 ? 'Falta 1 carta' : 'Faltan ' + (LIMIT - n) + ' cartas'));
+    top.appendChild(el('span', null, 'Tokens: ' + tokens));
+    top.appendChild(el('span', null, 'Valor aprox.: ' + eur.format(value)));
+    $deckCounter.appendChild(top);
+    var meter = el('div', 'meter');
+    var fill = el('div');
+    fill.style.width = Math.min(100, n / LIMIT * 100) + '%';
+    meter.appendChild(fill);
+    $deckCounter.appendChild(meter);
+
+    // Secciones
+    $deckSections.textContent = '';
+    SECTIONS.forEach(function (s) {
+      var key = s[0];
+      var cards = deck.cards
+        .filter(function (c) { return c.sec === key; })
+        .sort(function (a, b) { return a.name.localeCompare(b.name); });
+      var total = cards.reduce(function (t, c) { return t + c.qty; }, 0);
+
+      var box = el('section', 'sec' + (key === 'comandante' ? ' cmd' : ''));
+      var h = el('h3', null, s[1]);
+      h.appendChild(el('small', null,
+        key === 'tokens' ? total + ' · no cuentan para las ' + LIMIT
+          : key === 'comandante' ? total + ' / 1'
+          : String(total)));
+      box.appendChild(h);
+
+      if (cards.length) {
+        var ul = el('ul');
+        cards.forEach(function (c) { ul.appendChild(renderRow(deck, c)); });
+        box.appendChild(ul);
+      } else {
+        box.appendChild(el('p', 'note', EMPTY[key] || 'Sin cartas todavía.'));
+      }
+      $deckSections.appendChild(box);
+    });
+  }
+
+  function newDeck() {
+    var deck = {
+      id: Date.now().toString(36) + Math.random().toString(36).slice(2, 7),
+      name: 'Mazo ' + (decks.length + 1),
+      cards: []
+    };
+    decks.push(deck);
+    currentId = deck.id;
+    $addQ.value = '';
+    $addResults.textContent = '';
+    commit('');
+    $deckName.focus();
+    $deckName.select();
+  }
+
+  document.getElementById('deckNew').addEventListener('click', newDeck);
+  document.getElementById('deckFirst').addEventListener('click', newDeck);
+
+  $deckName.addEventListener('input', function () {
+    var deck = currentDeck();
+    if (!deck) return;
+    deck.name = $deckName.value;
+    commit('');
+  });
+
+  document.getElementById('deckDelete').addEventListener('click', function () {
+    var deck = currentDeck();
+    if (!deck) return;
+    if (!window.confirm('¿Eliminar el mazo «' + (deck.name || 'Mazo sin nombre') + '»? No se puede deshacer.')) return;
+    decks.splice(decks.indexOf(deck), 1);
+    currentId = decks.length ? decks[0].id : null;
+    $addQ.value = '';
+    $addResults.textContent = '';
+    commit('');
+  });
+
+  // Buscador de cartas para añadir al mazo
+  var addTimer;
+  var addToken = 0;
+
+  function renderPick(card) {
+    var isToken = sectionFor(card) === 'tokens';
+    var box = el('div', 'pick');
+    var src = image(card, 'small');
+    if (src) {
+      var im = el('img');
+      im.loading = 'lazy';
+      im.alt = '';
+      im.src = src;
+      box.appendChild(im);
+    }
+    box.appendChild(el('div', 'nm', card.name));
+    box.appendChild(el('div', 'tp', frontType(card)));
+
+    var btns = el('div', 'btns');
+    var add = el('button', null, isToken ? 'Añadir token' : 'Añadir');
+    add.type = 'button';
+    add.addEventListener('click', function () { addCard(card, false); });
+    btns.appendChild(add);
+    if (!isToken && canCommand(card)) {
+      var cm = el('button', null, '★ Comandante');
+      cm.type = 'button';
+      cm.addEventListener('click', function () { addCard(card, true); });
+      btns.appendChild(cm);
+    }
+    box.appendChild(btns);
+    return box;
+  }
+
+  async function searchAdd() {
+    var text = $addQ.value.trim();
+    var mine = ++addToken;
+    $addResults.textContent = '';
+    if (text.length < 2) return;
+
+    var tokens = $addTokens.checked;
+    var params = new URLSearchParams({ q: tokens ? text + ' t:token' : text, unique: 'cards', order: 'name' });
+    if (tokens) params.set('include_extras', 'true');
+    try {
+      var res = await fetch(API + '?' + params.toString());
+      if (mine !== addToken) return;
+      if (res.status === 404) { say('Sin resultados para «' + text + '».', true); return; }
+      if (!res.ok) throw new Error('HTTP ' + res.status);
+      var data = await res.json();
+      if (mine !== addToken) return;
+
+      // Primero los nombres que empiezan por lo escrito.
+      var low = text.toLowerCase();
+      var starts = [];
+      var rest = [];
+      data.data.forEach(function (c) { (c.name.toLowerCase().indexOf(low) === 0 ? starts : rest).push(c); });
+      say('');
+      starts.concat(rest).slice(0, 12).forEach(function (c) { $addResults.appendChild(renderPick(c)); });
+    } catch (err) {
+      if (mine === addToken) say('No se han podido buscar cartas. Inténtalo de nuevo.', true);
+    }
+  }
+
+  $addQ.addEventListener('input', function () {
+    clearTimeout(addTimer);
+    addTimer = setTimeout(searchAdd, 350);
+  });
+  $addTokens.addEventListener('change', searchAdd);
+
+  /* ---------- Secciones ---------- */
+
+  var views = {
+    inicio: document.getElementById('view-inicio'),
+    cartas: document.getElementById('view-cartas'),
+    mazos: document.getElementById('view-mazos')
+  };
+  var cardsLoaded = false;
+
+  function route() {
+    var name = location.hash.slice(1);
+    if (!views[name]) name = 'inicio';
+    Object.keys(views).forEach(function (k) { views[k].hidden = k !== name; });
+    document.querySelectorAll('nav a').forEach(function (a) {
+      if (a.dataset.view === name) a.setAttribute('aria-current', 'page');
+      else a.removeAttribute('aria-current');
+    });
+    if (name === 'cartas' && !cardsLoaded) { cardsLoaded = true; load(true); }
+    if (name === 'mazos') renderDecks();
+    window.scrollTo(0, 0);
+  }
+
+  // Si un símbolo decorativo no carga, se quita en vez de dejar el icono roto.
+  document.querySelectorAll('.hero img').forEach(function (img) {
+    if (img.complete && !img.naturalWidth) img.remove();
+    else img.addEventListener('error', function () { img.remove(); });
+  });
+
+  window.addEventListener('hashchange', route);
+  route();
 })();
 </script>
 </body>
