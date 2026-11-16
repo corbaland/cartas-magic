@@ -529,6 +529,25 @@
     .hero h1, .orn, .mana img, .hero-bg img { animation: none; }
     .meter div { transition: none; }
   }
+
+  /* ---------- Carta ampliada al dejar el ratón encima ---------- */
+  #zoom {
+    position: fixed;
+    inset: auto;
+    z-index: 50;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    overflow: hidden;
+    border-radius: 4.75% / 3.5%;
+    background: var(--panel-2) center / cover no-repeat;
+    box-shadow: 0 24px 60px rgba(0, 0, 0, .6), 0 0 0 1px rgba(255, 255, 255, .08);
+    pointer-events: none;
+    animation: zoom-in .16s ease-out;
+  }
+  #zoom img { width: 100%; height: 100%; display: block; }
+  @keyframes zoom-in { from { opacity: 0; transform: scale(.94); } }
+  @media (prefers-reduced-motion: reduce) { #zoom { animation: none; } }
 </style>
 </head>
 <body>
@@ -650,6 +669,8 @@
     </div>
   </div>
 </dialog>
+
+<div id="zoom" popover="manual" aria-hidden="true"><img alt=""></div>
 
 <script>
 (function () {
@@ -1743,6 +1764,76 @@
     addTimer = setTimeout(searchAdd, 350);
   });
   $addTokens.addEventListener('change', searchAdd);
+
+  /* ---------- Carta ampliada al dejar el ratón encima ---------- */
+
+  var ZOOM_DELAY = 1500;   // milisegundos con el ratón quieto sobre la carta
+  var ZOOMABLE = '.card img, .tile .art, .pick img, .arts button';
+  var $zoom = document.getElementById('zoom');
+  var $zoomImg = $zoom.querySelector('img');
+  var canHover = window.matchMedia('(hover: hover)');
+  var zoomTimer;
+  var zoomFor = null;     // elemento sobre el que está el ratón
+  var zoomOpen = false;
+  // "popover" la pone por encima de las fichas abiertas; sin soporte, se muestra a mano.
+  var zoomPop = typeof $zoom.showPopover === 'function';
+  if (!zoomPop) $zoom.style.display = 'none';
+
+  function hideZoom() {
+    clearTimeout(zoomTimer);
+    zoomFor = null;
+    if (!zoomOpen) return;
+    zoomOpen = false;
+    if (zoomPop) $zoom.hidePopover();
+    else $zoom.style.display = 'none';
+    $zoomImg.removeAttribute('src');
+  }
+
+  function showZoom(target) {
+    var img = target.matches('img') ? target : target.querySelector('img');
+    if (!img || !img.isConnected || !img.src) return;
+
+    var r = target.getBoundingClientRect();
+    var vw = window.innerWidth;
+    var vh = window.innerHeight;
+    var h = Math.min(680, vh - 24);
+    var w = Math.round(h * 488 / 680);
+    if (w < r.width * 1.25) return;          // ya se ve casi igual de grande
+
+    // A la derecha de la carta si cabe; si no, a la izquierda.
+    var gap = 14;
+    var left;
+    if (r.right + gap + w <= vw - 8) left = r.right + gap;
+    else if (r.left - gap - w >= 8) left = r.left - gap - w;
+    else return;
+    var top = Math.max(12, Math.min(r.top + r.height / 2 - h / 2, vh - h - 12));
+
+    $zoom.style.left = left + 'px';
+    $zoom.style.top = top + 'px';
+    $zoom.style.width = w + 'px';
+    $zoom.style.height = h + 'px';
+    // La imagen que ya está cargada hace de fondo mientras llega la grande.
+    $zoom.style.backgroundImage = 'url("' + img.src + '")';
+    $zoomImg.src = img.src.replace(/\/(small|normal)\//, '/large/');
+    if (zoomPop) $zoom.showPopover();
+    else $zoom.style.display = 'block';
+    zoomOpen = true;
+  }
+
+  document.addEventListener('mouseover', function (ev) {
+    if (!canHover.matches) return;
+    var target = ev.target.closest ? ev.target.closest(ZOOMABLE) : null;
+    if (target === zoomFor) return;
+    hideZoom();
+    if (!target) return;
+    zoomFor = target;
+    zoomTimer = setTimeout(function () { if (zoomFor === target) showZoom(target); }, ZOOM_DELAY);
+  });
+  document.documentElement.addEventListener('mouseleave', hideZoom);
+  document.addEventListener('mousedown', hideZoom);
+  document.addEventListener('keydown', hideZoom);
+  document.addEventListener('scroll', hideZoom, true);
+  window.addEventListener('blur', hideZoom);
 
   /* ---------- Secciones ---------- */
 
