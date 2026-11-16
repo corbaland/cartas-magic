@@ -338,7 +338,7 @@
   /* ---------- Mazos ---------- */
   .decks { display: grid; grid-template-columns: 250px minmax(0, 1fr); gap: 20px; align-items: start; }
   @media (max-width: 800px) { .decks { grid-template-columns: minmax(0, 1fr); } }
-  .deck-side, .counter, .adder, .sec, .deck-empty {
+  .deck-side, .counter, .adder, .deck-empty {
     background: var(--panel);
     border: 1px solid var(--border);
     border-radius: 12px;
@@ -417,32 +417,70 @@
     cursor: pointer;
   }
   .pick button:hover { border-color: var(--accent); color: var(--accent); }
-  #deckSections { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 14px; align-items: start; }
-  .sec { padding: 12px; }
-  .sec.cmd { border-color: var(--accent); }
-  .sec h3 { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; margin: 0 0 8px; font-size: .95rem; }
-  .sec h3 small { color: var(--muted); font-weight: 400; }
-  .sec ul { list-style: none; margin: 0; padding: 0; }
+  #deckSections { display: flex; flex-direction: column; gap: 28px; }
+  .sec h3 { display: flex; align-items: center; gap: 10px; margin: 0 0 14px; font-size: 1.1rem; }
+  .sec h3 small { color: var(--muted); font-weight: 400; font-size: .85rem; white-space: nowrap; }
+  .sec h3::after { content: ""; flex: 1; height: 1px; background: var(--border); }
+  .sec.cmd h3 { color: var(--accent); }
+  .sec.cmd h3::after { background: var(--accent); opacity: .5; }
+  .sec ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+    gap: 18px 14px;
+  }
   .sec .note { margin: 0; }
-  .row { display: flex; align-items: center; gap: 8px; padding: 5px 0; border-top: 1px solid var(--border); }
-  .row img { flex: none; width: 30px; aspect-ratio: 488 / 680; border-radius: 3px; background: var(--panel-2); }
-  .row .nm {
-    flex: 1;
-    min-width: 0;
+  .tile { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+  .tile .art {
+    position: relative;
+    display: block;
     padding: 0;
     border: 0;
+    border-radius: 4.75% / 3.5%;
     background: none;
     color: inherit;
     font: inherit;
-    text-align: left;
     cursor: pointer;
+    transition: transform .12s ease, box-shadow .12s ease;
+  }
+  .tile .art:hover, .tile .art:focus-visible {
+    outline: none;
+    transform: translateY(-4px) scale(1.02);
+    box-shadow: 0 10px 24px rgba(0, 0, 0, .4), 0 0 0 2px var(--accent);
+  }
+  .tile img, .tile .noimg {
+    width: 100%;
+    aspect-ratio: 488 / 680;
+    border-radius: 4.75% / 3.5%;
+    background: var(--panel-2);
+    display: block;
+  }
+  .tile .noimg { display: grid; place-items: center; padding: 8px; border: 1px solid var(--border); text-align: center; font-size: .85rem; }
+  .tile .badge {
+    position: absolute;
+    top: 6px;
+    right: 6px;
+    padding: 2px 8px;
+    border-radius: 99px;
+    background: rgba(0, 0, 0, .78);
+    color: #fff;
+    font-size: .85rem;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+  }
+  .tbar { display: flex; align-items: center; gap: 4px; min-height: 28px; }
+  .tbar .eur {
+    flex: 1;
+    min-width: 0;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+    color: var(--muted);
+    font-size: .8rem;
+    font-variant-numeric: tabular-nums;
   }
-  .row .nm:hover { color: var(--accent); }
-  .row .eur { color: var(--muted); font-size: .8rem; font-variant-numeric: tabular-nums; white-space: nowrap; }
-  .row .qty { min-width: 1.4em; text-align: center; font-size: .9rem; font-variant-numeric: tabular-nums; }
   .ico {
     flex: none;
     width: 26px;
@@ -460,6 +498,33 @@
   }
   .ico:hover { color: var(--accent); border-color: var(--accent); }
   .ico.del:hover { color: var(--danger); border-color: var(--danger); }
+
+  /* ---------- Importar lista ---------- */
+  :root { --on-accent: #1a1300; }
+  @media (prefers-color-scheme: light) { :root { --on-accent: #fff; } }
+  #importDlg { width: min(560px, calc(100vw - 32px)); }
+  .import { display: flex; flex-direction: column; gap: 12px; padding: 20px; }
+  .import h2 { margin: 0; font-size: 1.2rem; }
+  .import .note { margin: 0; font-size: .88rem; }
+  .import textarea {
+    width: 100%;
+    min-height: 220px;
+    resize: vertical;
+    font: .9rem/1.45 ui-monospace, Consolas, monospace;
+    color: var(--text);
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 10px 12px;
+  }
+  .import textarea:focus { outline: 2px solid var(--accent); outline-offset: 1px; }
+  .import .close-row { gap: 10px; }
+  #importMsg { margin: 0; min-height: 1.4em; font-size: .9rem; color: var(--muted); }
+  #importMsg.bad { color: var(--danger); }
+  button.primary { background: var(--accent); border-color: var(--accent); color: var(--on-accent); font-weight: 600; }
+  button.primary:disabled { opacity: .6; cursor: default; }
+  .hint { color: var(--accent); font-size: .8rem; margin: 6px 0 0; }
+  @media (prefers-reduced-motion: reduce) { .tile .art { transition: none; } }
   @media (prefers-reduced-motion: reduce) {
     .hero h1, .orn, .mana img, .hero-bg img { animation: none; }
     .meter div { transition: none; }
@@ -545,6 +610,8 @@
     <div id="deckEditor" hidden>
       <div class="deck-head">
         <input id="deckName" type="text" maxlength="60" aria-label="Nombre del mazo">
+        <button id="deckImport" class="plain" type="button">Importar lista</button>
+        <button id="deckCopy" class="plain" type="button">Copiar lista</button>
         <button id="deckDelete" class="plain danger" type="button">Eliminar mazo</button>
       </div>
       <div id="deckCounter" class="counter" role="status" aria-live="polite"></div>
@@ -569,6 +636,20 @@
 </footer>
 
 <dialog id="dlg" aria-labelledby="dlg-name"></dialog>
+
+<dialog id="importDlg" aria-labelledby="importTitle">
+  <div class="import">
+    <h2 id="importTitle">Importar cartas</h2>
+    <p class="note">Pega la lista del mazo, una carta por línea, tal como la copian Moxfield, Archidekt o EDHPlay. Sirven formatos como «1 Sol Ring», «1x Sol Ring» o «1 Sol Ring (C21) 263».</p>
+    <textarea id="importText" rows="12" spellcheck="false" aria-label="Lista de cartas" placeholder="1 Atraxa, Praetors' Voice&#10;1 Sol Ring&#10;1 Cultivate&#10;8 Forest"></textarea>
+    <label class="check"><input id="importClear" type="checkbox"> Vaciar el mazo antes de importar</label>
+    <p id="importMsg" role="status" aria-live="polite"></p>
+    <div class="close-row">
+      <button id="importCancel" class="plain" type="button">Cancelar</button>
+      <button id="importGo" class="plain primary" type="button">Importar</button>
+    </div>
+  </div>
+</dialog>
 
 <script>
 (function () {
@@ -654,7 +735,8 @@
     return b;
   }
 
-  function openDetail(card) {
+  // onPick (opcional) se llama cuando se elige otro arte o edición en la ficha.
+  function openDetail(card, onPick) {
     $dlg.textContent = '';
     var wrap = el('div', 'detail');
 
@@ -668,6 +750,11 @@
     left.appendChild(caption);
     var arts = el('div', 'arts');
     left.appendChild(arts);
+    var hint = null;
+    if (onPick) {
+      hint = el('p', 'hint', 'Elige un arte o una edición para usarlo en este mazo.');
+      left.appendChild(hint);
+    }
     wrap.appendChild(left);
 
     var right = el('div');
@@ -721,7 +808,10 @@
     var edStatus = el('p', 'type', 'Cargando ediciones…');
     eds.appendChild(edStatus);
     right.appendChild(eds);
-    loadPrints(card, eds, edStatus, img, caption, arts);
+    loadPrints(card, eds, edStatus, img, caption, arts, onPick ? function (p) {
+      onPick(p);
+      hint.textContent = 'Guardado en el mazo: ' + p.set_name + '.';
+    } : null);
 
     var row = el('div', 'close-row');
     var close = el('button', 'plain', 'Cerrar');
@@ -759,7 +849,7 @@
     return [p.set_name, p.artist ? 'Ilustración de ' + p.artist : ''].filter(Boolean).join(' · ');
   }
 
-  async function loadPrints(card, box, status, img, caption, arts) {
+  async function loadPrints(card, box, status, img, caption, arts, onPick) {
     var mine = ++printsToken;
     var url = card.prints_search_uri;
     if (!url || !/^https:\/\/api\.scryfall\.com\//.test(url)) {
@@ -784,6 +874,7 @@
         caption.textContent = artCaption(p);
         var k = artKey(p);
         Object.keys(thumbs).forEach(function (id) { thumbs[id].classList.toggle('on', id === k); });
+        if (onPick) onPick(p);
       }
 
       data.data.forEach(function (p) {
@@ -1206,11 +1297,17 @@
     deck.cards.splice(deck.cards.indexOf(entry), 1);
   }
 
-  async function openById(id) {
+  // Con "entry" (una carta del mazo), el arte que se elija en la ficha se guarda en el mazo.
+  async function openById(id, entry) {
     try {
       var res = await fetch('https://api.scryfall.com/cards/' + encodeURIComponent(id));
       if (!res.ok) throw new Error('HTTP ' + res.status);
-      openDetail(await res.json());
+      openDetail(await res.json(), entry ? function (p) {
+        entry.id = p.id;
+        entry.img = image(p, 'small');
+        entry.eur = p.prices ? (p.prices.eur || p.prices.eur_foil || null) : null;
+        commit('Arte de ' + entry.name + ' cambiado a ' + p.set_name + '.');
+      } : null);
     } catch (err) {
       say('No se ha podido abrir la carta.', true);
     }
@@ -1225,47 +1322,54 @@
     return b;
   }
 
-  function renderRow(deck, c) {
-    var li = el('li', 'row');
+  function renderTile(deck, c) {
+    var li = el('li', 'tile');
+
+    // La carta en grande: al pulsarla se abre la ficha con precios, ediciones y artes.
+    var art = el('button', 'art');
+    art.type = 'button';
+    art.title = c.name + ' · ver ficha, precios y artes';
+    art.setAttribute('aria-label', c.name + ': ver ficha, precios y artes');
     if (c.img) {
       var im = el('img');
       im.loading = 'lazy';
       im.alt = '';
-      im.src = c.img;
-      li.appendChild(im);
+      im.src = c.img.replace('/small/', '/normal/');
+      art.appendChild(im);
+    } else {
+      art.appendChild(el('span', 'noimg', c.name));
     }
-    var nm = el('button', 'nm', c.name);
-    nm.type = 'button';
-    nm.title = c.type;
-    nm.addEventListener('click', function () { openById(c.id); });
-    li.appendChild(nm);
+    if (c.qty > 1) art.appendChild(el('span', 'badge', '×' + c.qty));
+    art.addEventListener('click', function () { openById(c.id, c); });
+    li.appendChild(art);
 
-    if (c.eur != null && c.sec !== 'tokens') li.appendChild(el('span', 'eur', eur.format(Number(c.eur) * c.qty)));
+    var bar = el('div', 'tbar');
+    bar.appendChild(el('span', 'eur', c.eur != null && c.sec !== 'tokens' ? eur.format(Number(c.eur) * c.qty) : ''));
 
     // Solo las tierras básicas y los tokens admiten varias copias.
     if (c.basic || c.sec === 'tokens') {
-      li.appendChild(icon('−', 'Quitar una copia de ' + c.name, null, function () {
+      bar.appendChild(icon('−', 'Quitar una copia de ' + c.name, null, function () {
         c.qty--;
         if (c.qty < 1) removeEntry(deck, c);
         commit('');
       }));
-      li.appendChild(el('span', 'qty', String(c.qty)));
-      li.appendChild(icon('+', 'Añadir otra copia de ' + c.name, null, function () {
+      bar.appendChild(icon('+', 'Añadir otra copia de ' + c.name, null, function () {
         if (c.sec !== 'tokens' && countCards(deck) >= LIMIT) { say(FULL, true); return; }
         c.qty++;
         commit('');
       }));
     }
     if (c.cmd && c.sec !== 'comandante') {
-      li.appendChild(icon('★', 'Hacer comandante a ' + c.name, null, function () {
+      bar.appendChild(icon('★', 'Hacer comandante a ' + c.name, null, function () {
         makeCommander(deck, c);
         commit(c.name + ' es ahora el comandante.');
       }));
     }
-    li.appendChild(icon('✕', 'Quitar ' + c.name + ' del mazo', 'del', function () {
+    bar.appendChild(icon('✕', 'Quitar ' + c.name + ' del mazo', 'del', function () {
       removeEntry(deck, c);
       commit('Quitada: ' + c.name + '.');
     }));
+    li.appendChild(bar);
     return li;
   }
 
@@ -1334,7 +1438,7 @@
 
       if (cards.length) {
         var ul = el('ul');
-        cards.forEach(function (c) { ul.appendChild(renderRow(deck, c)); });
+        cards.forEach(function (c) { ul.appendChild(renderTile(deck, c)); });
         box.appendChild(ul);
       } else {
         box.appendChild(el('p', 'note', EMPTY[key] || 'Sin cartas todavía.'));
@@ -1377,6 +1481,199 @@
     $addQ.value = '';
     $addResults.textContent = '';
     commit('');
+  });
+
+  /* ---------- Importar y copiar listas ---------- */
+
+  var $importDlg = document.getElementById('importDlg');
+  var $importText = document.getElementById('importText');
+  var $importClear = document.getElementById('importClear');
+  var $importMsg = document.getElementById('importMsg');
+  var $importGo = document.getElementById('importGo');
+  // Líneas que son títulos de bloque en las listas exportadas, no cartas.
+  var HEADS = /^(deck|mazo|main|mainboard|main deck|sideboard|side|companion|tokens?|creatures?|lands?|instants?|sorcery|sorceries|artifacts?|enchantments?|planeswalkers?|battles?)$/;
+
+  function importSay(msg, bad) {
+    $importMsg.textContent = msg || '';
+    $importMsg.classList.toggle('bad', !!bad);
+  }
+
+  // Convierte el texto pegado en [{ qty, name, set, cn, cmd }], sin nombres repetidos.
+  function parseList(text) {
+    var byName = {};
+    var list = [];
+    var mode = '';
+    text.split(/\r?\n/).forEach(function (raw) {
+      var line = raw.trim();
+      if (!line) { mode = ''; return; }
+
+      var comment = /^(\/\/|#)/.test(line);
+      if (comment || !/^\d/.test(line)) {
+        var head = line.replace(/^(\/\/|#)\s*/, '').replace(/\s*\(\d+\)\s*$/, '').replace(/[:\s]+$/, '').toLowerCase();
+        if (/^(commanders?|comandante)$/.test(head)) { mode = 'cmd'; return; }
+        if (/^(maybeboard|considering)$/.test(head)) { mode = 'skip'; return; }
+        if (comment || HEADS.test(head)) { mode = ''; return; }
+      }
+      if (mode === 'skip') return;
+
+      var m = /^(\d+)\s*[xX]?\s+(.+)$/.exec(line);
+      var qty = m ? Math.min(parseInt(m[1], 10), 99) : 1;
+      var rest = (m ? m[2] : line)
+        .replace(/\s+\^[^^]*\^/g, '')        // colores de etiqueta de Archidekt
+        .replace(/(\s+\[[^\]]*\])+\s*$/, '') // categorías entre corchetes
+        .replace(/\s+\*[A-Za-z]+\*/g, '')    // *F* (foil), *E* (etched)
+        .replace(/\s+#\S+/g, '');            // etiquetas
+      var set = '';
+      var cn = '';
+      var p = /\s+\(([A-Za-z0-9]{2,6})\)(?:\s+(\S+))?\s*$/.exec(rest);
+      if (p) { set = p[1].toLowerCase(); cn = (p[2] || '').toLowerCase(); rest = rest.slice(0, p.index); }
+      var name = rest.trim().replace(/\s+\/{1,2}\s+/, ' // ');
+      if (!name || qty < 1) return;
+
+      var key = name.toLowerCase();
+      if (byName[key]) {
+        byName[key].qty += qty;
+        if (mode === 'cmd') byName[key].cmd = true;
+      } else {
+        byName[key] = { qty: qty, name: name, set: set, cn: cn, cmd: mode === 'cmd' };
+        list.push(byName[key]);
+      }
+    });
+    return list;
+  }
+
+  // Scryfall admite 75 cartas por petición.
+  async function fetchCollection(identifiers) {
+    var found = [];
+    for (var i = 0; i < identifiers.length; i += 75) {
+      if (i) await new Promise(function (r) { setTimeout(r, 120); });
+      var res = await fetch('https://api.scryfall.com/cards/collection', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ identifiers: identifiers.slice(i, i + 75) })
+      });
+      if (!res.ok) throw new Error('HTTP ' + res.status);
+      found = found.concat((await res.json()).data);
+    }
+    return found;
+  }
+
+  // Mete una carta importada en el mazo. Devuelve 'ok', 'dup' (ya estaba),
+  // 'full' (no cabe) o 'part' (solo han cabido algunas copias).
+  function place(deck, card, qty, asCommander) {
+    var c = slim(card);
+    if (c.sec === 'tokens') {
+      var tk = deck.cards.find(function (x) { return x.sec === 'tokens' && x.id === c.id; });
+      if (tk) tk.qty += qty;
+      else { c.qty = qty; deck.cards.push(c); }
+      return 'ok';
+    }
+    var room = LIMIT - countCards(deck);
+    var same = deck.cards.find(function (x) { return x.sec !== 'tokens' && x.name === c.name; });
+    if (same) {
+      if (asCommander && same.cmd) { makeCommander(deck, same); return 'ok'; }
+      if (!same.basic) return 'dup';
+      if (room < 1) return 'full';
+      same.qty += Math.min(qty, room);
+      return qty > room ? 'part' : 'ok';
+    }
+    if (room < 1) return 'full';
+    c.qty = c.basic ? Math.min(qty, room) : 1;
+    deck.cards.push(c);
+    if (asCommander && c.cmd) makeCommander(deck, c);
+    return c.basic && qty > room ? 'part' : 'ok';
+  }
+
+  async function runImport() {
+    var deck = currentDeck();
+    if (!deck) return;
+    var entries = parseList($importText.value);
+    if (!entries.length) { importSay('No he encontrado ninguna carta en el texto.', true); return; }
+
+    $importGo.disabled = true;
+    importSay('Buscando ' + entries.length + ' cartas…');
+    try {
+      var byName = {};
+      var index = function (cards) {
+        cards.forEach(function (card) {
+          [card.name].concat((card.card_faces || []).map(function (f) { return f.name; })).forEach(function (n) {
+            var k = n.toLowerCase();
+            if (!byName[k]) byName[k] = card;
+          });
+        });
+      };
+      var missing = function () { return entries.filter(function (e) { return !byName[e.name.toLowerCase()]; }); };
+
+      // 1.º la edición exacta si la lista la indica; 2.º por nombre; 3.º búsqueda aproximada.
+      index(await fetchCollection(entries.map(function (e) {
+        return e.set && e.cn ? { set: e.set, collector_number: e.cn } : { name: e.name };
+      })));
+      var left = missing().filter(function (e) { return e.set && e.cn; });
+      if (left.length) index(await fetchCollection(left.map(function (e) { return { name: e.name }; })));
+      left = missing().slice(0, 15);
+      for (var i = 0; i < left.length; i++) {
+        await new Promise(function (r) { setTimeout(r, 120); });
+        var res = await fetch('https://api.scryfall.com/cards/named?fuzzy=' + encodeURIComponent(left[i].name));
+        if (res.ok) byName[left[i].name.toLowerCase()] = await res.json();
+      }
+
+      if ($importClear.checked) deck.cards = [];
+      var before = deck.cards.reduce(function (n, c) { return n + c.qty; }, 0);
+      var dup = 0;
+      var full = 0;
+      var notFound = [];
+      entries.forEach(function (e) {
+        var card = byName[e.name.toLowerCase()];
+        if (!card) { notFound.push(e.name); return; }
+        var r = place(deck, card, e.qty, e.cmd);
+        if (r === 'dup') dup++;
+        else if (r === 'full' || r === 'part') full++;
+      });
+      var added = deck.cards.reduce(function (n, c) { return n + c.qty; }, 0) - before;
+
+      var msg = added === 1 ? 'Importada 1 carta.' : 'Importadas ' + added + ' cartas.';
+      if (dup) msg += ' ' + dup + (dup === 1 ? ' ya estaba' : ' ya estaban') + ' en el mazo.';
+      if (full) msg += ' ' + full + (full === 1 ? ' no cabe' : ' no caben') + ' por el límite de ' + LIMIT + '.';
+      if (notFound.length) {
+        msg += ' No encontradas (' + notFound.length + '): ' + notFound.slice(0, 10).join(', ')
+          + (notFound.length > 10 ? ' y ' + (notFound.length - 10) + ' más' : '') + '.';
+      }
+      $importDlg.close();
+      commit(msg);
+      if (full || notFound.length) $deckMsg.classList.add('bad');
+    } catch (err) {
+      importSay('No se han podido buscar las cartas. Inténtalo de nuevo.', true);
+      console.error(err);
+    } finally {
+      $importGo.disabled = false;
+    }
+  }
+
+  document.getElementById('deckImport').addEventListener('click', function () {
+    $importText.value = '';
+    $importClear.checked = false;
+    importSay('');
+    $importDlg.showModal();
+  });
+  document.getElementById('importCancel').addEventListener('click', function () { $importDlg.close(); });
+  $importGo.addEventListener('click', runImport);
+
+  // Copia el mazo como lista "1 Nombre", con el comandante primero y sin tokens.
+  document.getElementById('deckCopy').addEventListener('click', async function () {
+    var deck = currentDeck();
+    if (!deck) return;
+    var cards = deck.cards
+      .filter(function (c) { return c.sec !== 'tokens'; })
+      .sort(function (a, b) {
+        return (b.sec === 'comandante') - (a.sec === 'comandante') || a.name.localeCompare(b.name);
+      });
+    if (!cards.length) { say('El mazo está vacío: no hay nada que copiar.', true); return; }
+    try {
+      await navigator.clipboard.writeText(cards.map(function (c) { return c.qty + ' ' + c.name; }).join('\n'));
+      say('Lista copiada al portapapeles (' + countCards(deck) + ' cartas).');
+    } catch (err) {
+      say('No se ha podido copiar la lista al portapapeles.', true);
+    }
   });
 
   // Buscador de cartas para añadir al mazo
