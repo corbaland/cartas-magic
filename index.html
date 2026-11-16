@@ -155,6 +155,14 @@
   .detail td:last-child { text-align: right; font-weight: 600; }
   .links { display: flex; flex-wrap: wrap; gap: 14px; font-size: .92rem; margin-bottom: 14px; }
   .close-row { display: flex; justify-content: flex-end; }
+  .editions h3 { font-size: 1rem; margin: 0 0 2px; }
+  .editions .type { margin-bottom: 6px; font-size: .85rem; }
+  .editions .scroll { max-height: 260px; overflow: auto; margin-bottom: 14px; border-top: 1px solid var(--border); }
+  .editions table { margin: 0; font-size: .88rem; }
+  .editions th { text-align: left; font-weight: 600; color: var(--muted); padding: 6px 0; position: sticky; top: 0; background: var(--panel); }
+  .editions th:not(:first-child), .editions td:not(:first-child) { text-align: right; padding-left: 12px; white-space: nowrap; }
+  .editions td:not(:first-child) { font-weight: 600; }
+  .editions td small { color: var(--muted); font-weight: 400; }
 </style>
 </head>
 <body>
@@ -323,6 +331,13 @@
       });
     right.appendChild(links);
 
+    var eds = el('div', 'editions');
+    eds.appendChild(el('h3', null, 'Precios por edición'));
+    var edStatus = el('p', 'type', 'Cargando ediciones…');
+    eds.appendChild(edStatus);
+    right.appendChild(eds);
+    loadPrints(card, eds, edStatus);
+
     var row = el('div', 'close-row');
     var close = el('button', 'plain', 'Cerrar');
     close.type = 'button';
@@ -333,6 +348,63 @@
     wrap.appendChild(right);
     $dlg.appendChild(wrap);
     $dlg.showModal();
+  }
+
+  var printsToken = 0;  // descarta la respuesta si se abre otra carta antes
+
+  function priceCell(fmt, normal, foil) {
+    var td = el('td');
+    if (normal != null) {
+      td.textContent = fmt.format(Number(normal));
+    } else if (foil != null) {
+      td.textContent = fmt.format(Number(foil)) + ' ';
+      td.appendChild(el('small', null, 'foil'));
+    } else {
+      td.textContent = '—';
+    }
+    return td;
+  }
+
+  async function loadPrints(card, box, status) {
+    var mine = ++printsToken;
+    var url = card.prints_search_uri;
+    if (!url || !/^https:\/\/api\.scryfall\.com\//.test(url)) {
+      status.textContent = 'No hay más ediciones disponibles.';
+      return;
+    }
+    try {
+      var res = await fetch(url);
+      if (!res.ok) throw new Error('HTTP ' + res.status);
+      var data = await res.json();
+      if (mine !== printsToken) return;
+
+      var table = el('table');
+      var head = el('tr');
+      ['Edición', '€', '$'].forEach(function (t) { head.appendChild(el('th', null, t)); });
+      table.appendChild(head);
+
+      data.data.forEach(function (p) {
+        var tr = el('tr');
+        var name = el('td', null, p.set_name + ' ');
+        var year = (p.released_at || '').slice(0, 4);
+        name.appendChild(el('small', null, [year, '#' + p.collector_number].filter(Boolean).join(' · ')));
+        tr.appendChild(name);
+        tr.appendChild(priceCell(eur, p.prices.eur, p.prices.eur_foil));
+        tr.appendChild(priceCell(usd, p.prices.usd, p.prices.usd_foil));
+        table.appendChild(tr);
+      });
+
+      var n = data.total_cards || data.data.length;
+      status.textContent = n === 1 ? '1 edición' : num.format(n) + ' ediciones'
+        + (data.has_more ? ' (se muestran las ' + data.data.length + ' más recientes)' : '');
+      var scroll = el('div', 'scroll');
+      scroll.appendChild(table);
+      box.appendChild(scroll);
+    } catch (err) {
+      if (mine !== printsToken) return;
+      status.textContent = 'No se han podido cargar las ediciones.';
+      console.error(err);
+    }
   }
 
   $dlg.addEventListener('click', function (ev) {
