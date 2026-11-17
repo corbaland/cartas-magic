@@ -1967,6 +1967,7 @@
   /* ---------- Carta ampliada al dejar el ratón encima ---------- */
 
   var ZOOM_DELAY = 1000;   // milisegundos con el ratón quieto sobre la carta
+  var ZOOM_FAST = 120;     // en la mesa de juego, casi al instante
   var ZOOMABLE = '.card img, .tile .art, .pick img, .arts button, .gcard img, .glog-cards img, .gv-pick img';
   var $zoom = document.getElementById('zoom');
   var $zoomImg = $zoom.querySelector('img');
@@ -1997,15 +1998,26 @@
     var vh = window.innerHeight;
     var h = Math.min(680, vh - 24);
     var w = Math.round(h * 488 / 680);
-    if (w < r.width * 1.25) return;          // ya se ve casi igual de grande
-
-    // A la derecha de la carta si cabe; si no, a la izquierda.
-    var gap = 14;
-    var left;
-    if (r.right + gap + w <= vw - 8) left = r.right + gap;
-    else if (r.left - gap - w >= 8) left = r.left - gap - w;
-    else return;
-    var top = Math.max(12, Math.min(r.top + r.height / 2 - h / 2, vh - h - 12));
+    var left, top;
+    var table = target.closest('.gtable');
+    if (table) {
+      // En la mesa: en el lateral contrario al de la carta, para no taparla.
+      var area = (table.querySelector('.gmain') || table).getBoundingClientRect();
+      h = Math.max(260, Math.min(560, area.height - 24, vh - 24));
+      w = Math.round(h * 488 / 680);
+      var onRight = r.left + r.width / 2 > area.left + area.width / 2;
+      left = onRight ? area.left + 12 : area.right - w - 12;
+      left = Math.max(8, Math.min(left, vw - w - 8));
+      top = Math.max(12, Math.min(area.top + (area.height - h) / 2, vh - h - 12));
+    } else {
+      if (w < r.width * 1.25) return;          // ya se ve casi igual de grande
+      // A la derecha de la carta si cabe; si no, a la izquierda.
+      var gap = 14;
+      if (r.right + gap + w <= vw - 8) left = r.right + gap;
+      else if (r.left - gap - w >= 8) left = r.left - gap - w;
+      else return;
+      top = Math.max(12, Math.min(r.top + r.height / 2 - h / 2, vh - h - 12));
+    }
 
     $zoom.style.left = left + 'px';
     $zoom.style.top = top + 'px';
@@ -2022,11 +2034,13 @@
   document.addEventListener('mouseover', function (ev) {
     if (!canHover.matches) return;
     var target = ev.target.closest ? ev.target.closest(ZOOMABLE) : null;
+    if (document.body.classList.contains('gdragging')) target = null;   // arrastrando una carta
     if (target === zoomFor) return;
     hideZoom();
     if (!target) return;
     zoomFor = target;
-    zoomTimer = setTimeout(function () { if (zoomFor === target) showZoom(target); }, ZOOM_DELAY);
+    var delay = target.closest('.gtable, .gviewer') ? ZOOM_FAST : ZOOM_DELAY;
+    zoomTimer = setTimeout(function () { if (zoomFor === target) showZoom(target); }, delay);
   });
   document.documentElement.addEventListener('mouseleave', hideZoom);
   document.addEventListener('mousedown', hideZoom);
