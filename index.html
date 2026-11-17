@@ -635,6 +635,7 @@
   #pwMsg.ok { color: var(--good); }
   .accounts .muted { color: var(--muted); }
 </style>
+<link rel="stylesheet" href="juego.css">
 </head>
 <body>
 <header>
@@ -644,6 +645,7 @@
       <a href="#inicio" data-view="inicio">Inicio</a>
       <a href="#cartas" data-view="cartas">Cartas</a>
       <a href="#mazos" data-view="mazos">Mazos</a>
+      <a href="#jugar" data-view="jugar" id="navJugar" hidden>Jugar</a>
       <a href="#admin" data-view="admin" id="navAdmin" hidden>Admin</a>
     </nav>
     <div class="account">
@@ -749,6 +751,10 @@
     </div>
   </div>
 </div>
+</section>
+
+<section id="view-jugar" hidden>
+  <div id="jugarRoot"></div>
 </section>
 
 <section id="view-admin" hidden>
@@ -1961,7 +1967,7 @@
   /* ---------- Carta ampliada al dejar el ratón encima ---------- */
 
   var ZOOM_DELAY = 1000;   // milisegundos con el ratón quieto sobre la carta
-  var ZOOMABLE = '.card img, .tile .art, .pick img, .arts button';
+  var ZOOMABLE = '.card img, .tile .art, .pick img, .arts button, .gcard img, .glog-cards img, .gv-pick img';
   var $zoom = document.getElementById('zoom');
   var $zoomImg = $zoom.querySelector('img');
   var canHover = window.matchMedia('(hover: hover)');
@@ -2191,6 +2197,12 @@
     if (moved) storeNote((moved === 1 ? 'Se ha pasado 1 mazo' : 'Se han pasado ' + moved + ' mazos') + ' de este navegador a tu cuenta.');
     else storeNote('Guardado en tu cuenta.');
     renderDecks();
+    authChanged();
+  }
+
+  // Avisa a otras partes de la página (la sección Jugar) de que ha cambiado la sesión o los mazos.
+  function authChanged() {
+    document.dispatchEvent(new CustomEvent('cm:auth'));
   }
 
   function setUserUI() {
@@ -2203,6 +2215,7 @@
     $whoAdmin.hidden = !admin;
     $navAdmin.hidden = !admin;
     if (location.hash === '#admin') route();
+    authChanged();
   }
 
   async function onUser(u) {
@@ -2509,13 +2522,18 @@
     inicio: document.getElementById('view-inicio'),
     cartas: document.getElementById('view-cartas'),
     mazos: document.getElementById('view-mazos'),
-    admin: document.getElementById('view-admin')
+    admin: document.getElementById('view-admin'),
+    jugar: document.getElementById('view-jugar')
   };
   var cardsLoaded = false;
 
+  function canPlay() {
+    return !!(window.Juego && window.Juego.allowed());
+  }
+
   function route() {
     var name = location.hash.slice(1);
-    if (!views[name] || (name === 'admin' && !isAdmin())) name = 'inicio';
+    if (!views[name] || (name === 'admin' && !isAdmin()) || (name === 'jugar' && !canPlay())) name = 'inicio';
     Object.keys(views).forEach(function (k) { views[k].hidden = k !== name; });
     document.querySelectorAll('nav a').forEach(function (a) {
       if (a.dataset.view === name) a.setAttribute('aria-current', 'page');
@@ -2524,8 +2542,24 @@
     if (name === 'cartas' && !cardsLoaded) { cardsLoaded = true; load(true); }
     if (name === 'mazos') renderDecks();
     if (name === 'admin') loadAdmin();
+    if (window.Juego) {
+      if (name === 'jugar') window.Juego.show();
+      else window.Juego.hide();
+    }
     window.scrollTo(0, 0);
   }
+
+  // Lo que necesita la sección Jugar (juego.js) de esta página.
+  window.CartasMagic = {
+    sb: sb,
+    el: el,
+    openById: openById,
+    user: function () { return user; },
+    profile: function () { return profile; },
+    isAdmin: isAdmin,
+    decks: function () { return decks; },
+    route: route
+  };
 
   // Si un símbolo decorativo no carga, se quita en vez de dejar el icono roto.
   document.querySelectorAll('.hero img').forEach(function (img) {
@@ -2537,5 +2571,6 @@
   route();
 })();
 </script>
+<script src="juego.js"></script>
 </body>
 </html>
