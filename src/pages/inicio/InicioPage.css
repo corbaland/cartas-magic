@@ -1,0 +1,76 @@
+.hero {
+  --gold-1: #ffe9a8;
+  --gold-2: #d99a1c;
+  position: relative;
+  overflow: hidden;
+  min-height: calc(100vh - var(--header-h));
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 34px;
+  padding: 48px 16px;
+  text-align: center;
+  background:
+    radial-gradient(ellipse at 12% 18%, rgba(248, 241, 201, .10), transparent 42%),
+    radial-gradient(ellipse at 88% 14%, rgba(74, 163, 224, .14), transparent 44%),
+    radial-gradient(ellipse at 50% 108%, rgba(154, 134, 184, .16), transparent 50%),
+    radial-gradient(ellipse at 6% 88%, rgba(63, 174, 106, .13), transparent 42%),
+    radial-gradient(ellipse at 94% 86%, rgba(232, 85, 62, .13), transparent 42%);
+}
+@media (prefers-color-scheme: light) { .hero { --gold-1: #b9790a; --gold-2: #7a4d00; } }
+
+.hero h1 {
+  position: relative;
+  margin: 0;
+  font-family: "Palatino Linotype", Palatino, "Book Antiqua", Georgia, serif;
+  font-size: clamp(2.3rem, 7.2vw, 5.2rem);
+  font-weight: 700;
+  letter-spacing: .02em;
+  line-height: 1.1;
+  text-wrap: balance;
+  color: var(--accent);
+  background: linear-gradient(180deg, var(--gold-1), var(--gold-2));
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  filter: drop-shadow(0 4px 22px rgba(224, 165, 38, .28));
+  animation: hero-rise .8s ease-out .3s both;
+}
+
+.mana { position: relative; display: flex; gap: clamp(10px, 3vw, 26px); }
+.mana img {
+  width: clamp(44px, 9vw, 76px);
+  aspect-ratio: 1;
+  border-radius: 50%;
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, .25), 0 0 34px var(--glow);
+  animation: hero-pop .6s cubic-bezier(.2, 1.4, .4, 1) both, hero-float 5s ease-in-out infinite;
+  animation-delay: calc(var(--i) * .09s), calc(var(--i) * -.9s);
+}
+
+.orn { position: relative; display: flex; align-items: center; gap: 14px; color: var(--accent); animation: hero-rise .8s ease-out .5s both; }
+.orn::before, .orn::after {
+  content: "";
+  width: clamp(60px, 16vw, 180px);
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--accent));
+}
+.orn::after { transform: scaleX(-1); }
+
+.hero-bg img {
+  position: absolute;
+  width: var(--s);
+  aspect-ratio: 1;
+  opacity: .07;
+  filter: grayscale(1);
+  animation: hero-float 9s ease-in-out infinite;
+  animation-delay: var(--d);
+}
+
+@keyframes hero-pop { from { opacity: 0; scale: .4; } }
+@keyframes hero-float { 50% { translate: 0 -10px; } }
+@keyframes hero-rise { from { opacity: 0; transform: translateY(14px); } }
+
+@media (prefers-reduced-motion: reduce) {
+  .hero h1, .orn, .mana img, .hero-bg img { animation: none; }
+}

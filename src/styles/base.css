@@ -1,0 +1,101 @@
+/* Colores, tipografía y piezas comunes de toda la web. */
+:root {
+  --bg: #14161b;
+  --panel: #1e2129;
+  --panel-2: #272b35;
+  --text: #eceef2;
+  --muted: #9aa1ae;
+  --accent: #e0a526;
+  --on-accent: #1a1300;
+  --border: #343946;
+  --good: #6fcf97;
+  --danger: #ff6b6b;
+  --header-h: 58px;
+  --card-radius: 4.75% / 3.5%;
+  color-scheme: dark;
+}
+@media (prefers-color-scheme: light) {
+  :root {
+    --bg: #f4f2ee;
+    --panel: #ffffff;
+    --panel-2: #f0ede7;
+    --text: #1d1f24;
+    --muted: #666c78;
+    --accent: #a86b00;
+    --on-accent: #fff;
+    --border: #dcd8cf;
+    --good: #1d7a46;
+    --danger: #c62828;
+    color-scheme: light;
+  }
+}
+
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  line-height: 1.4;
+}
+
+.bar {
+  max-width: 1300px;
+  margin: 0 auto;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+}
+.page { max-width: 1300px; margin: 0 auto; padding: 16px; }
+.note { margin: 10px 0 0; color: var(--muted); font-size: .8rem; }
+.note.bad { color: var(--danger); }
+
+/* Campos */
+input[type="search"], input[type="text"], select {
+  font: inherit;
+  color: var(--text);
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 10px 12px;
+}
+input:focus, select:focus, button:focus-visible, a:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+/* Botones */
+button.plain {
+  font: inherit;
+  color: var(--text);
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 10px 18px;
+  cursor: pointer;
+}
+button.plain:hover { border-color: var(--accent); }
+button.small { padding: 7px 12px; font-size: .9rem; }
+button.primary { background: var(--accent); border-color: var(--accent); color: var(--on-accent); font-weight: 600; }
+button.primary:disabled { opacity: .6; cursor: default; }
+button.danger { color: var(--danger); }
+button.danger:hover { border-color: var(--danger); }
+
+/* Ventanas */
+dialog {
+  width: min(820px, calc(100vw - 32px));
+  max-height: calc(100vh - 32px);
+  padding: 0;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: var(--panel);
+  color: var(--text);
+}
+dialog::backdrop { background: rgba(0, 0, 0, .65); }
+
+@media (max-width: 560px) {
+  button.small { padding: 6px 9px; font-size: .85rem; }
+}

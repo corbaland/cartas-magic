@@ -1,0 +1,68 @@
+.search { position: relative; flex: 1 1 240px; min-width: 0; }
+.search input[type="search"] { width: 100%; }
+
+.sug {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: calc(100% + 6px);
+  z-index: 6;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  overflow: hidden;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  box-shadow: 0 14px 36px rgba(0, 0, 0, .4);
+  animation: sug-in .14s ease-out;
+}
+@keyframes sug-in { from { opacity: 0; transform: translateY(-6px); } }
+
+.sug-list {
+  max-height: 330px;
+  margin: 0;
+  padding: 6px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  list-style: none;
+  scrollbar-width: thin;
+  scrollbar-color: var(--border) transparent;
+}
+.sug-list li {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 10px;
+  border-left: 3px solid transparent;
+  border-radius: 8px;
+  color: var(--muted);
+  cursor: pointer;
+  transition: background .1s, border-color .1s, padding-left .1s;
+}
+.sug-list .txt { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sug-list b { color: var(--text); font-weight: 600; }
+.sug-list .go { opacity: 0; color: var(--accent); font-size: .75rem; white-space: nowrap; transition: opacity .1s; }
+.sug-list li.on { padding-left: 14px; border-left-color: var(--accent); background: var(--panel-2); color: var(--text); }
+.sug-list li.on b { color: var(--accent); }
+.sug-list li.on .go { opacity: 1; }
+
+.sug-preview { display: none; width: 190px; padding: 10px; border-left: 1px solid var(--border); background: var(--panel-2); }
+.sug-preview img { display: block; width: 100%; aspect-ratio: 488 / 680; border-radius: var(--card-radius); opacity: 0; transition: opacity .15s; }
+.sug-preview img.ready { opacity: 1; }
+@media (min-width: 720px) { .sug-preview { display: block; } }
+
+.sug-foot {
+  grid-column: 1 / -1;
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 7px 12px;
+  border-top: 1px solid var(--border);
+  color: var(--muted);
+  font-size: .75rem;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sug { animation: none; }
+  .sug-list li, .sug-list .go, .sug-preview img { transition: none; }
+}
