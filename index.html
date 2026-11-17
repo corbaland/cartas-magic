@@ -602,6 +602,9 @@
   #authMsg { margin: 0; min-height: 1.4em; color: var(--danger); font-size: .9rem; }
   .auth .actions { display: flex; justify-content: flex-end; gap: 10px; }
   .note.bad { color: var(--danger); }
+  #deckGate .deck-empty { max-width: 560px; margin: 24px auto; }
+  .gate-btns { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; }
+  .gate-btns[hidden] { display: none; }
 
   /* ---------- Administración ---------- */
   .admin-title { margin: 8px 0 4px; font-size: 1.6rem; }
@@ -686,7 +689,16 @@
 </section>
 
 <section id="view-mazos" hidden>
-<div class="page decks">
+<div id="deckGate" class="page">
+  <div class="deck-empty">
+    <p id="deckGateText">Cargando…</p>
+    <div class="gate-btns">
+      <button id="gateLogin" class="plain primary" type="button">Entrar</button>
+      <button id="gateSignup" class="plain" type="button">Crear cuenta</button>
+    </div>
+  </div>
+</div>
+<div id="deckArea" class="page decks" hidden>
   <aside class="deck-side">
     <div class="side-head">
       <h2>Mis mazos</h2>
@@ -1303,8 +1315,10 @@
   var $addTokens = document.getElementById('addTokens');
   var $addResults = document.getElementById('addResults');
 
-  var decks = readDecks();
-  var currentId = decks.length ? decks[0].id : null;
+  // Los mazos solo existen con cuenta; los de antes guardados en el navegador
+  // se pasan a la cuenta al entrar (ver loadCloud).
+  var decks = [];
+  var currentId = null;
 
   function readDecks() {
     try {
@@ -1516,6 +1530,8 @@
   }
 
   function renderDecks() {
+    renderGate();
+    if (!user) return;
     $deckList.textContent = '';
     decks.forEach(function (d) {
       var li = el('li');
@@ -1590,6 +1606,7 @@
   }
 
   function newDeck() {
+    if (!user) { openAuth('login'); return; }
     var deck = {
       id: Date.now().toString(36) + Math.random().toString(36).slice(2, 7),
       name: 'Mazo ' + (decks.length + 1),
@@ -2011,8 +2028,35 @@
     $deckStore.classList.toggle('bad', !!bad);
   }
 
+  var authReady = false;   // true cuando Supabase ha dicho si hay sesión o no
+  var $deckGate = document.getElementById('deckGate');
+  var $deckArea = document.getElementById('deckArea');
+  var $deckGateText = document.getElementById('deckGateText');
+
+  // Sin cuenta no hay mazos: se muestra una invitación a entrar.
+  function renderGate() {
+    $deckGate.hidden = !!user;
+    $deckArea.hidden = !user;
+    if (user) return;
+    var btns = $deckGate.querySelector('.gate-btns');
+    if (!sb) {
+      $deckGateText.textContent = 'No se ha podido conectar con el servidor de cuentas. Recarga la página para volver a intentarlo.';
+      btns.hidden = true;
+      return;
+    }
+    if (!authReady) {
+      $deckGateText.textContent = 'Cargando…';
+      btns.hidden = true;
+      return;
+    }
+    var local = readDecks().length;
+    $deckGateText.textContent = 'Para crear y guardar mazos necesitas una cuenta.'
+      + (local ? ' Tienes ' + (local === 1 ? '1 mazo' : local + ' mazos') + ' de antes en este navegador: se pasarán a tu cuenta al entrar.' : '');
+    btns.hidden = false;
+  }
+
   function guestNote() {
-    storeNote('Los mazos se guardan en este navegador. Entra en tu cuenta para tenerlos en la nube.');
+    storeNote('');
   }
 
   function queueSave(id) {
@@ -2119,8 +2163,9 @@
       user = null;
       profile = null;
       dirty = {};
-      decks = readDecks();
-      currentId = decks.length ? decks[0].id : null;
+      decks = [];
+      currentId = null;
+      authReady = true;
       guestNote();
       setUserUI();
       renderDecks();
@@ -2128,6 +2173,7 @@
     }
     user = u;
     profile = null;
+    authReady = true;
     decks = [];
     currentId = null;
     renderDecks();
@@ -2164,12 +2210,17 @@
   $tabLogin.addEventListener('click', function () { setAuthMode('login'); });
   $tabSignup.addEventListener('click', function () { setAuthMode('signup'); });
 
-  $loginBtn.addEventListener('click', function () {
+  function openAuth(mode) {
+    if (!sb) return;
     $authForm.reset();
-    setAuthMode('login');
+    setAuthMode(mode);
     $authDlg.showModal();
     $authUser.focus();
-  });
+  }
+
+  $loginBtn.addEventListener('click', function () { openAuth('login'); });
+  document.getElementById('gateLogin').addEventListener('click', function () { openAuth('login'); });
+  document.getElementById('gateSignup').addEventListener('click', function () { openAuth('signup'); });
   document.getElementById('authCancel').addEventListener('click', function () { $authDlg.close(); });
 
   $authForm.addEventListener('submit', async function (ev) {
