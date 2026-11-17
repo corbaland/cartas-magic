@@ -627,7 +627,12 @@
   .accounts th, .accounts td { padding: 10px 14px; text-align: left; white-space: nowrap; border-bottom: 1px solid var(--border); }
   .accounts th { color: var(--muted); font-weight: 600; font-size: .82rem; }
   .accounts tbody tr:last-child td { border-bottom: 0; }
-  .accounts td:last-child, .accounts th:last-child { text-align: right; font-variant-numeric: tabular-nums; }
+  .accounts td:nth-child(5), .accounts th:nth-child(5) { text-align: right; font-variant-numeric: tabular-nums; }
+  .accounts td:last-child, .accounts th:last-child { text-align: right; }
+  .accounts button.small { padding: 5px 10px; font-size: .85rem; }
+  #pwDlg { width: min(400px, calc(100vw - 32px)); }
+  #pwMsg { margin: 0; min-height: 1.4em; color: var(--danger); font-size: .9rem; }
+  #pwMsg.ok { color: var(--good); }
   .accounts .muted { color: var(--muted); }
 </style>
 </head>
@@ -766,12 +771,12 @@
     <div class="table-wrap">
       <table class="accounts">
         <thead>
-          <tr><th>Usuario</th><th>Rol</th><th>Alta</th><th>Último acceso</th><th>Mazos</th></tr>
+          <tr><th>Usuario</th><th>Rol</th><th>Alta</th><th>Último acceso</th><th>Mazos</th><th>Contraseña</th></tr>
         </thead>
         <tbody id="adminAccounts"></tbody>
       </table>
     </div>
-    <p class="note">Las contraseñas no se muestran: Supabase solo guarda una huella cifrada de cada una, de la que no se puede sacar la original.</p>
+    <p class="note">Las contraseñas no se muestran: Supabase solo guarda una huella cifrada de cada una, de la que no se puede sacar la original. Con «Cambiar» puedes ponerle una nueva a quien la haya olvidado.</p>
   </div>
 </div>
 </section>
@@ -819,6 +824,25 @@
     <div class="actions">
       <button id="authCancel" class="plain" type="button">Cancelar</button>
       <button id="authGo" class="plain primary" type="submit">Entrar</button>
+    </div>
+  </form>
+</dialog>
+
+<dialog id="pwDlg" aria-labelledby="pwTitle">
+  <form id="pwForm" class="auth" novalidate>
+    <h2 id="pwTitle">Nueva contraseña</h2>
+    <p id="pwFor" class="note"></p>
+    <label class="field">Contraseña nueva
+      <input id="pwNew" type="password" autocomplete="new-password" required>
+    </label>
+    <label class="field">Repite la contraseña
+      <input id="pwNew2" type="password" autocomplete="new-password" required>
+    </label>
+    <p class="note">Al menos 6 caracteres. Si no es tu cuenta, se cerrarán sus sesiones abiertas y tendrá que entrar con la nueva.</p>
+    <p id="pwMsg" role="alert"></p>
+    <div class="actions">
+      <button id="pwCancel" class="plain" type="button">Cancelar</button>
+      <button id="pwGo" class="plain primary" type="submit">Guardar</button>
     </div>
   </form>
 </dialog>
@@ -2399,9 +2423,69 @@
         ? el('td', null, when.format(new Date(a.last_sign_in_at)))
         : el('td', 'muted', 'Nunca'));
       tr.appendChild(el('td', null, num.format(Number(a.decks))));
+      var pw = el('td');
+      var btn = el('button', 'plain small', 'Cambiar');
+      btn.type = 'button';
+      btn.setAttribute('aria-label', 'Cambiar la contraseña de ' + a.username);
+      btn.addEventListener('click', function () { openPassword(a); });
+      pw.appendChild(btn);
+      tr.appendChild(pw);
       $adminAccounts.appendChild(tr);
     });
   }
+
+  // Cambio de contraseña por el administrador
+  var $pwDlg = document.getElementById('pwDlg');
+  var $pwForm = document.getElementById('pwForm');
+  var $pwNew = document.getElementById('pwNew');
+  var $pwNew2 = document.getElementById('pwNew2');
+  var $pwMsg = document.getElementById('pwMsg');
+  var $pwGo = document.getElementById('pwGo');
+  var pwTarget = null;
+
+  function pwSay(text, ok) {
+    $pwMsg.textContent = text;
+    $pwMsg.classList.toggle('ok', !!ok);
+  }
+
+  function openPassword(account) {
+    pwTarget = account;
+    $pwForm.reset();
+    pwSay('');
+    $pwGo.disabled = false;
+    document.getElementById('pwFor').textContent = 'Para la cuenta «' + account.username + '».';
+    $pwDlg.showModal();
+    $pwNew.focus();
+  }
+
+  document.getElementById('pwCancel').addEventListener('click', function () { $pwDlg.close(); });
+
+  $pwForm.addEventListener('submit', async function (ev) {
+    ev.preventDefault();
+    if (!pwTarget || !isAdmin()) return;
+    var pass = $pwNew.value;
+    if (pass.length < 6) { pwSay('La contraseña debe tener al menos 6 caracteres.'); return; }
+    if (pass !== $pwNew2.value) { pwSay('Las contraseñas no coinciden.'); return; }
+    $pwGo.disabled = true;
+    pwSay('');
+    try {
+      var res = await sb.rpc('admin_set_password', { target: pwTarget.id, new_password: pass });
+      if (res.error) {
+        pwSay(/no encontrado/i.test(res.error.message) ? 'Ese usuario ya no existe.'
+          : /administradores|permission/i.test(res.error.message) ? 'Tu cuenta no tiene permiso para esto.'
+          : 'No se ha podido cambiar: ' + res.error.message);
+        $pwGo.disabled = false;
+        return;
+      }
+      $pwForm.reset();
+      pwSay('Contraseña cambiada para «' + pwTarget.username + '».', true);
+      setTimeout(function () { if ($pwDlg.open) $pwDlg.close(); }, 1500);
+    } catch (err) {
+      pwSay('No se ha podido conectar con el servidor.');
+      $pwGo.disabled = false;
+      console.error(err);
+    }
+  });
 
   // Pestañas del panel: Mazos y Cuentas
   var adminTabs = {
