@@ -620,6 +620,15 @@
   .user-card summary { cursor: pointer; }
   .user-card summary small { color: var(--muted); }
   .user-card ol { margin: 8px 0 0; padding-left: 22px; columns: 2 220px; font-size: .88rem; }
+  .admin-bar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px; }
+  .admin-tabs { flex: 0 1 320px; }
+  .table-wrap { overflow-x: auto; margin-top: 10px; border: 1px solid var(--border); border-radius: 12px; background: var(--panel); }
+  .accounts { width: 100%; border-collapse: collapse; font-size: .92rem; }
+  .accounts th, .accounts td { padding: 10px 14px; text-align: left; white-space: nowrap; border-bottom: 1px solid var(--border); }
+  .accounts th { color: var(--muted); font-weight: 600; font-size: .82rem; }
+  .accounts tbody tr:last-child td { border-bottom: 0; }
+  .accounts td:last-child, .accounts th:last-child { text-align: right; font-variant-numeric: tabular-nums; }
+  .accounts .muted { color: var(--muted); }
 </style>
 </head>
 <body>
@@ -742,12 +751,28 @@
   <h1 class="admin-title">Panel de administración</h1>
   <p class="note">Solo lo ve la cuenta de administrador. Aquí irán también las secciones de prueba.</p>
   <div id="adminStats" class="stats"></div>
-  <div class="side-head">
-    <h2>Usuarios y mazos</h2>
+  <div class="admin-bar">
+    <div class="tabs admin-tabs" role="tablist" aria-label="Secciones de administración">
+      <button id="adminTabMazos" type="button" role="tab" aria-selected="true" aria-controls="adminMazos">Mazos</button>
+      <button id="adminTabCuentas" type="button" role="tab" aria-selected="false" aria-controls="adminCuentas">Cuentas</button>
+    </div>
     <button id="adminReload" class="plain small" type="button">Actualizar</button>
   </div>
   <p id="adminMsg" class="note" role="status" aria-live="polite"></p>
-  <div id="adminUsers" class="users"></div>
+  <div id="adminMazos" role="tabpanel" aria-labelledby="adminTabMazos">
+    <div id="adminUsers" class="users"></div>
+  </div>
+  <div id="adminCuentas" role="tabpanel" aria-labelledby="adminTabCuentas" hidden>
+    <div class="table-wrap">
+      <table class="accounts">
+        <thead>
+          <tr><th>Usuario</th><th>Rol</th><th>Alta</th><th>Último acceso</th><th>Mazos</th></tr>
+        </thead>
+        <tbody id="adminAccounts"></tbody>
+      </table>
+    </div>
+    <p class="note">Las contraseñas no se muestran: Supabase solo guarda una huella cifrada de cada una, de la que no se puede sacar la original.</p>
+  </div>
 </div>
 </section>
 
@@ -2304,10 +2329,11 @@
     $adminMsg.classList.remove('bad');
     var both = await Promise.all([
       sb.from('profiles').select('id,username,is_admin,created_at').order('created_at'),
-      sb.from('decks').select('id,user_id,name,cards,updated_at').order('updated_at', { ascending: false })
+      sb.from('decks').select('id,user_id,name,cards,updated_at').order('updated_at', { ascending: false }),
+      sb.rpc('admin_list_users')
     ]);
     if (mine !== adminToken) return;
-    var err = both[0].error || both[1].error;
+    var err = both[0].error || both[1].error || both[2].error;
     if (err) {
       $adminMsg.textContent = 'No se han podido cargar los datos.';
       $adminMsg.classList.add('bad');
@@ -2351,8 +2377,45 @@
       });
       $adminUsers.appendChild(card);
     });
+
+    renderAccounts(both[2].data);
     $adminMsg.textContent = '';
   }
+
+  var when = new Intl.DateTimeFormat('es-ES', { dateStyle: 'medium', timeStyle: 'short' });
+  var $adminAccounts = document.getElementById('adminAccounts');
+
+  function renderAccounts(rows) {
+    $adminAccounts.textContent = '';
+    rows.forEach(function (a) {
+      var tr = el('tr');
+      tr.appendChild(el('td', null, a.username));
+      var role = el('td');
+      if (a.is_admin) role.appendChild(el('span', 'badge-admin', 'Admin'));
+      else role.textContent = 'Usuario';
+      tr.appendChild(role);
+      tr.appendChild(el('td', null, day.format(new Date(a.created_at))));
+      tr.appendChild(a.last_sign_in_at
+        ? el('td', null, when.format(new Date(a.last_sign_in_at)))
+        : el('td', 'muted', 'Nunca'));
+      tr.appendChild(el('td', null, num.format(Number(a.decks))));
+      $adminAccounts.appendChild(tr);
+    });
+  }
+
+  // Pestañas del panel: Mazos y Cuentas
+  var adminTabs = {
+    mazos: [document.getElementById('adminTabMazos'), document.getElementById('adminMazos')],
+    cuentas: [document.getElementById('adminTabCuentas'), document.getElementById('adminCuentas')]
+  };
+  Object.keys(adminTabs).forEach(function (key) {
+    adminTabs[key][0].addEventListener('click', function () {
+      Object.keys(adminTabs).forEach(function (k) {
+        adminTabs[k][0].setAttribute('aria-selected', String(k === key));
+        adminTabs[k][1].hidden = k !== key;
+      });
+    });
+  });
 
   document.getElementById('adminReload').addEventListener('click', loadAdmin);
 
