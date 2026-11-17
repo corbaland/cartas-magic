@@ -25,7 +25,8 @@ interface DecksState {
   /** Último aviso del editor («Añadida a Criaturas: …»). */
   msg: Msg
   select: (id: string) => void
-  create: () => void
+  /** Crea un mazo vacío, lo deja abierto y devuelve su id. */
+  create: () => string
   rename: (name: string) => void
   remove: () => void
   /** Aplica el resultado de una regla a su mazo y lo guarda. */
@@ -57,6 +58,7 @@ export const useDecks = create<DecksState>((set, get) => ({
     const deck: Deck = { id: newDeckId(), name: `Mazo ${get().decks.length + 1}`, cards: [] }
     set((s) => ({ decks: [...s.decks, deck], currentId: deck.id, msg: { text: '' } }))
     queueSave(deck.id)
+    return deck.id
   },
 
   rename: (name) => {

@@ -20,6 +20,7 @@ export const router = createHashRouter([
       { index: true, element: <InicioPage /> },
       { path: 'cartas', lazy: async () => ({ Component: (await import('../pages/cartas/CartasPage')).CartasPage }) },
       { path: 'mazos', lazy: async () => ({ Component: (await import('../pages/mazos/MazosPage')).MazosPage }) },
+      { path: 'mazos/:id', lazy: async () => ({ Component: (await import('../pages/mazos/MazosPage')).MazosPage }) },
       {
         path: 'jugar',
         lazy: async () => ({ Component: (await import('../pages/jugar/JugarPage')).JugarPage }),

@@ -7,7 +7,7 @@ import { DeckSections } from './DeckSections'
 import { ImportDialog } from './ImportDialog'
 
 /** Editor de un mazo: nombre, contador, buscador para añadir y secciones. */
-export function DeckEditor({ deck }: { deck: Deck }) {
+export function DeckEditor({ deck, onDeleted }: { deck: Deck; onDeleted?: () => void }) {
   const { rename, remove, say, msg } = useDecks()
   const [importing, setImporting] = useState(false)
   const n = countCards(deck)
@@ -24,7 +24,10 @@ export function DeckEditor({ deck }: { deck: Deck }) {
   }
 
   function del() {
-    if (window.confirm(`¿Eliminar el mazo «${deck.name || 'Mazo sin nombre'}»? No se puede deshacer.`)) remove()
+    if (window.confirm(`¿Eliminar el mazo «${deck.name || 'Mazo sin nombre'}»? No se puede deshacer.`)) {
+      remove()
+      onDeleted?.()
+    }
   }
 
   return (

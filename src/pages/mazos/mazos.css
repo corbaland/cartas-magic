@@ -200,3 +200,60 @@
 @media (prefers-reduced-motion: reduce) {
   .tile .art, .meter div { transition: none; }
 }
+
+/* ---------- Menú de mazos ---------- */
+.gallery-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px; }
+.gallery-head + .note { margin: 4px 0 16px; }
+.deck-gallery {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+  gap: 22px 18px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.deck-box {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  width: 100%;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  text-decoration: none;
+  cursor: pointer;
+}
+.deck-cover {
+  position: relative;
+  display: grid;
+  place-items: center;
+  aspect-ratio: 488 / 680;
+  overflow: hidden;
+  border-radius: var(--card-radius);
+  background:
+    radial-gradient(circle at 50% 50%, rgba(255, 233, 168, .5) 0 5%, transparent 6%),
+    repeating-linear-gradient(45deg, rgba(255, 255, 255, .04) 0 6px, transparent 6px 12px),
+    linear-gradient(160deg, #4a2a12, #22140a);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, .35), inset 0 0 0 3px #1a0f07, inset 0 0 0 5px rgba(224, 165, 38, .45);
+  transition: transform .12s ease, box-shadow .12s ease;
+}
+.deck-cover img { width: 100%; height: 100%; display: block; object-fit: cover; }
+.deck-box:hover .deck-cover, .deck-box:focus-visible .deck-cover {
+  transform: translateY(-4px) scale(1.02);
+  box-shadow: 0 12px 26px rgba(0, 0, 0, .45), 0 0 0 2px var(--accent);
+}
+.deck-box:focus-visible { outline: none; }
+.deck-nocmd { padding: 6px 12px; border-radius: 99px; background: rgba(0, 0, 0, .55); color: #ffe9a8; font-size: .85rem; font-weight: 600; }
+.deck-title { font-weight: 700; font-size: 1rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.deck-meta { color: var(--muted); font-size: .82rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.deck-meta.full { color: var(--good); }
+.deck-new .deck-cover { background: var(--panel); box-shadow: none; border: 2px dashed var(--border); }
+.deck-new .deck-cover span { color: var(--muted); font-size: 3rem; line-height: 1; }
+.deck-new:hover .deck-cover { border-color: var(--accent); box-shadow: none; }
+.deck-new:hover .deck-cover span { color: var(--accent); }
+.back-link { display: inline-block; margin-bottom: 12px; color: var(--accent); font-size: .9rem; font-weight: 600; text-decoration: none; }
+.back-link:hover { text-decoration: underline; }
+@media (prefers-reduced-motion: reduce) { .deck-cover { transition: none; } }
