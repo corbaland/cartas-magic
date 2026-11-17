@@ -15,6 +15,7 @@ export interface ImageUris {
 
 export interface CardFace {
   name: string
+  type_line?: string
   oracle_text?: string
   image_uris?: ImageUris
   illustration_id?: string
@@ -31,6 +32,7 @@ export interface Prices {
 export interface Card {
   id: string
   name: string
+  layout?: string
   type_line?: string
   oracle_text?: string
   set_name: string
@@ -111,6 +113,45 @@ export function fetchPrints(card: Card, signal?: AbortSignal): Promise<CardList>
 export function fetchCard(id: string, signal?: AbortSignal): Promise<Card> {
   return getJson<Card>(`${API}/cards/${encodeURIComponent(id)}`, signal)
 }
+
+/** Cartas para añadir a un mazo: hasta 12, primero las que empiezan por lo escrito. */
+export async function searchToAdd(text: string, tokens: boolean, signal?: AbortSignal): Promise<Card[]> {
+  const params = new URLSearchParams({ q: tokens ? `${text} t:token` : text, unique: 'cards', order: 'name' })
+  if (tokens) params.set('include_extras', 'true')
+  const data = await fetchCardPage(`${API}/cards/search?${params}`, signal)
+  const low = text.toLowerCase()
+  const starts = data.data.filter((c) => c.name.toLowerCase().startsWith(low))
+  const rest = data.data.filter((c) => !c.name.toLowerCase().startsWith(low))
+  return starts.concat(rest).slice(0, 12)
+}
+
+export type Identifier = { name: string } | { set: string; collector_number: string }
+
+const wait = (ms: number) => new Promise((r) => setTimeout(r, ms))
+
+/** Varias cartas de una vez (Scryfall admite 75 por petición). */
+export async function fetchCollection(ids: Identifier[]): Promise<Card[]> {
+  let found: Card[] = []
+  for (let i = 0; i < ids.length; i += 75) {
+    if (i) await wait(120)
+    const res = await fetch(`${API}/cards/collection`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ identifiers: ids.slice(i, i + 75) }),
+    })
+    if (!res.ok) throw new ScryfallError(res.status)
+    found = found.concat(((await res.json()) as CardList).data)
+  }
+  return found
+}
+
+/** Búsqueda aproximada por nombre (admite pequeñas faltas). Null si no la encuentra. */
+export async function fetchFuzzy(name: string): Promise<Card | null> {
+  const res = await fetch(`${API}/cards/named?fuzzy=${encodeURIComponent(name)}`)
+  return res.ok ? ((await res.json()) as Card) : null
+}
+
+export { wait }
 
 /** Imagen de una carta por su nombre exacto (sirve directamente como src). */
 export function namedImageUrl(name: string): string {

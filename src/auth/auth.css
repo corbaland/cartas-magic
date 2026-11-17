@@ -1,0 +1,48 @@
+.auth-dialog { width: min(400px, calc(100vw - 32px)); }
+.auth { display: flex; flex-direction: column; gap: 12px; padding: 20px; }
+.auth h2 { margin: 0; font-size: 1.2rem; }
+.auth .note { margin: 0; font-size: .85rem; }
+.auth-msg { min-height: 1.4em; margin: 0; color: var(--danger); font-size: .9rem; }
+.auth .actions { display: flex; justify-content: flex-end; gap: 10px; }
+
+.tabs { display: flex; gap: 4px; padding: 4px; border-radius: 10px; background: var(--panel-2); }
+.tabs button {
+  flex: 1;
+  padding: 8px;
+  border: 0;
+  border-radius: 7px;
+  background: none;
+  color: var(--muted);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+.tabs button[aria-selected="true"] { background: var(--panel); color: var(--accent); }
+
+.field { display: flex; flex-direction: column; gap: 4px; color: var(--muted); font-size: .88rem; }
+.field input {
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--bg);
+  color: var(--text);
+  font: inherit;
+  font-size: 1rem;
+}
+
+.account { display: flex; align-items: center; gap: 8px; margin-left: 10px; white-space: nowrap; }
+.account .who { max-width: 140px; overflow: hidden; text-overflow: ellipsis; font-size: .9rem; font-weight: 600; }
+.badge-admin {
+  padding: 2px 7px;
+  border-radius: 99px;
+  background: var(--accent);
+  color: var(--on-accent);
+  font-size: .68rem;
+  font-weight: 700;
+  letter-spacing: .05em;
+  text-transform: uppercase;
+}
+@media (max-width: 560px) {
+  .account { margin-left: 4px; gap: 6px; }
+  .account .who { max-width: 72px; }
+}

@@ -7,4 +7,6 @@ export default defineConfig({
   // Rutas relativas: la web se sirve en https://corbaland.github.io/cartas-magic/
   base: './',
   server: { port: 5173, strictPort: true },
+  // La base (React + cliente de Supabase) ronda los 580 kB sin comprimir (~170 kB comprimida).
+  build: { chunkSizeWarningLimit: 650 },
 })

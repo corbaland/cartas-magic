@@ -1,0 +1,202 @@
+/* ---------- Estructura ---------- */
+.decks { display: grid; grid-template-columns: 250px minmax(0, 1fr); gap: 20px; align-items: start; }
+@media (max-width: 800px) { .decks { grid-template-columns: minmax(0, 1fr); } }
+
+.deck-side, .counter, .adder, .deck-empty {
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--panel);
+}
+.deck-empty { padding: 40px 20px; text-align: center; }
+.deck-empty p { margin: 0 0 14px; color: var(--muted); }
+.deck-gate { max-width: 560px; margin: 24px auto; }
+.gate-btns { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; }
+
+/* ---------- Lista de mazos ---------- */
+.deck-side { padding: 14px; }
+.side-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 10px; }
+.side-head h2 { margin: 0; font-size: 1rem; }
+.side-head .plain { padding: 7px 10px; font-size: .88rem; }
+.deck-list { display: flex; flex-direction: column; gap: 4px; margin: 0; padding: 0; list-style: none; }
+.deck-list button {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 9px 10px;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.deck-list button:hover { background: var(--panel-2); }
+.deck-list button.on { border-color: var(--accent); background: var(--panel-2); }
+.deck-list span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.deck-list small { color: var(--muted); font-variant-numeric: tabular-nums; white-space: nowrap; }
+
+/* ---------- Cabecera del mazo y contador ---------- */
+.deck-head { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 12px; }
+.deck-head .deck-name { flex: 1 1 220px; min-width: 0; padding: 9px 12px; font-size: 1.25rem; font-weight: 700; }
+
+.counter {
+  position: sticky;
+  top: calc(var(--header-h) + 8px);
+  z-index: 3;
+  margin-bottom: 12px;
+  padding: 12px 14px;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, .18);
+}
+.counter-top { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 16px; }
+.counter strong { font-size: 1.5rem; font-variant-numeric: tabular-nums; }
+.counter span { color: var(--muted); font-size: .9rem; }
+.meter { height: 8px; margin-top: 8px; overflow: hidden; border-radius: 99px; background: var(--panel-2); }
+.meter div { height: 100%; border-radius: 99px; background: var(--accent); transition: width .2s; }
+.counter.full strong { color: var(--good); }
+.counter.full .meter div { background: var(--good); }
+
+/* ---------- Añadir cartas ---------- */
+.adder { margin-bottom: 8px; padding: 12px 14px; }
+.adder-row { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
+.adder-row input[type="search"] { flex: 1 1 240px; min-width: 0; }
+.check { display: flex; align-items: center; gap: 6px; color: var(--muted); font-size: .9rem; white-space: nowrap; cursor: pointer; }
+.deck-msg { min-height: 1.4em; margin: 0 0 12px; color: var(--good); font-size: .9rem; }
+.deck-msg.bad { color: var(--danger); }
+
+.add-results {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  gap: 10px;
+  max-height: 340px;
+  margin-top: 8px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+}
+.pick { display: flex; flex-direction: column; gap: 5px; }
+.pick img { display: block; width: 100%; aspect-ratio: 488 / 680; border-radius: var(--card-radius); background: var(--panel-2); }
+.pick .nm { font-size: .8rem; font-weight: 600; overflow-wrap: anywhere; }
+.pick .tp { color: var(--muted); font-size: .72rem; }
+.pick .btns { display: flex; flex-direction: column; gap: 4px; margin-top: auto; }
+.pick button {
+  padding: 6px 8px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--panel-2);
+  color: var(--text);
+  font: inherit;
+  font-size: .8rem;
+  cursor: pointer;
+}
+.pick button:hover { border-color: var(--accent); color: var(--accent); }
+
+/* ---------- Secciones con las cartas en grande ---------- */
+.deck-sections { display: flex; flex-direction: column; gap: 28px; }
+.sec h3 { display: flex; align-items: center; gap: 10px; margin: 0 0 14px; font-size: 1.1rem; }
+.sec h3 small { color: var(--muted); font-size: .85rem; font-weight: 400; white-space: nowrap; }
+.sec h3::after { content: ""; flex: 1; height: 1px; background: var(--border); }
+.sec.cmd h3 { color: var(--accent); }
+.sec.cmd h3::after { background: var(--accent); opacity: .5; }
+.sec ul {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+  gap: 18px 14px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.sec .note { margin: 0; }
+
+.tile { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.tile .art {
+  position: relative;
+  display: block;
+  padding: 0;
+  border: 0;
+  border-radius: var(--card-radius);
+  background: none;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+  transition: transform .12s ease, box-shadow .12s ease;
+}
+.tile .art:hover, .tile .art:focus-visible {
+  outline: none;
+  transform: translateY(-4px) scale(1.02);
+  box-shadow: 0 10px 24px rgba(0, 0, 0, .4), 0 0 0 2px var(--accent);
+}
+.tile img, .tile .noimg {
+  display: block;
+  width: 100%;
+  aspect-ratio: 488 / 680;
+  border-radius: var(--card-radius);
+  background: var(--panel-2);
+}
+.tile .noimg { display: grid; place-items: center; padding: 8px; border: 1px solid var(--border); font-size: .85rem; text-align: center; }
+.tile .badge {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  padding: 2px 8px;
+  border-radius: 99px;
+  background: rgba(0, 0, 0, .78);
+  color: #fff;
+  font-size: .85rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+.tbar { display: flex; align-items: center; gap: 4px; min-height: 28px; }
+.tbar .eur {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  color: var(--muted);
+  font-size: .8rem;
+  font-variant-numeric: tabular-nums;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.ico {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  padding: 0;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: none;
+  color: var(--muted);
+  font: inherit;
+  line-height: 1;
+  cursor: pointer;
+}
+.ico:hover { border-color: var(--accent); color: var(--accent); }
+.ico.del:hover { border-color: var(--danger); color: var(--danger); }
+
+/* ---------- Importar lista ---------- */
+.import-dialog { width: min(560px, calc(100vw - 32px)); }
+.import { display: flex; flex-direction: column; gap: 12px; padding: 20px; }
+.import h2 { margin: 0; font-size: 1.2rem; }
+.import .note { margin: 0; font-size: .88rem; }
+.import textarea {
+  width: 100%;
+  min-height: 220px;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--bg);
+  color: var(--text);
+  font: .9rem/1.45 ui-monospace, Consolas, monospace;
+  resize: vertical;
+}
+.import-msg { min-height: 1.4em; margin: 0; color: var(--muted); font-size: .9rem; }
+.import-msg.bad { color: var(--danger); }
+.import .close-row { display: flex; justify-content: flex-end; gap: 10px; }
+
+@media (prefers-reduced-motion: reduce) {
+  .tile .art, .meter div { transition: none; }
+}

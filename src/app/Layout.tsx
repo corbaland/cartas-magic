@@ -1,14 +1,22 @@
 import { NavLink, Outlet, Link } from 'react-router'
 import { CardZoom } from '../components/CardZoom'
+import { AccountArea } from '../auth/AccountArea'
+import { AuthDialog } from '../auth/AuthDialog'
+import { useAuth, useIsAdmin } from '../auth/useAuth'
 import './Layout.css'
 
-const SECCIONES = [
-  { to: '/', label: 'Inicio', end: true },
-  { to: '/cartas', label: 'Cartas' },
-  { to: '/mazos', label: 'Mazos' },
-]
-
 export function Layout() {
+  const loggedIn = useAuth((s) => !!s.user)
+  const admin = useIsAdmin()
+
+  const secciones = [
+    { to: '/', label: 'Inicio', end: true },
+    { to: '/cartas', label: 'Cartas' },
+    { to: '/mazos', label: 'Mazos' },
+    ...(loggedIn ? [{ to: '/jugar', label: 'Jugar' }] : []),
+    ...(admin ? [{ to: '/admin', label: 'Admin' }] : []),
+  ]
+
   return (
     <>
       <header className="site-header">
@@ -17,12 +25,13 @@ export function Layout() {
             Cartas <span>Magic</span>
           </Link>
           <nav className="site-nav" aria-label="Secciones">
-            {SECCIONES.map((s) => (
+            {secciones.map((s) => (
               <NavLink key={s.to} to={s.to} end={s.end}>
                 {s.label}
               </NavLink>
             ))}
           </nav>
+          <AccountArea />
         </div>
       </header>
 
@@ -32,12 +41,15 @@ export function Layout() {
 
       <footer className="site-footer">
         Datos, imágenes y precios servidos por{' '}
-        <a href="https://scryfall.com" target="_blank" rel="noopener">Scryfall</a>{' '}
-        (precios orientativos de Cardmarket en € y TCGplayer en $, actualizados a diario). Página no oficial de
-        fans: Magic: The Gathering es propiedad de Wizards of the Coast, que no la respalda ni patrocina.
+        <a href="https://scryfall.com" target="_blank" rel="noopener">
+          Scryfall
+        </a>{' '}
+        (precios orientativos de Cardmarket en € y TCGplayer en $, actualizados a diario). Página no oficial de fans: Magic: The
+        Gathering es propiedad de Wizards of the Coast, que no la respalda ni patrocina.
       </footer>
 
       <CardZoom />
+      <AuthDialog />
     </>
   )
 }
