@@ -548,6 +548,75 @@
   #zoom img { width: 100%; height: 100%; display: block; }
   @keyframes zoom-in { from { opacity: 0; transform: scale(.94); } }
   @media (prefers-reduced-motion: reduce) { #zoom { animation: none; } }
+
+  /* ---------- Cuentas ---------- */
+  .account { display: flex; align-items: center; gap: 8px; margin-left: 10px; white-space: nowrap; }
+  .account .who { max-width: 140px; overflow: hidden; text-overflow: ellipsis; font-size: .9rem; font-weight: 600; }
+  .badge-admin {
+    padding: 2px 7px;
+    border-radius: 99px;
+    background: var(--accent);
+    color: var(--on-accent);
+    font-size: .68rem;
+    font-weight: 700;
+    letter-spacing: .05em;
+    text-transform: uppercase;
+  }
+  button.small { padding: 7px 12px; font-size: .9rem; }
+  @media (max-width: 560px) {
+    .brand { font-size: 1rem; margin-right: 0; }
+    nav { gap: 0; }
+    nav a { padding: 7px 8px; font-size: .88rem; }
+    .account { margin-left: 4px; gap: 6px; }
+    .account .who { max-width: 72px; }
+    button.small { padding: 6px 9px; font-size: .85rem; }
+  }
+  #authDlg { width: min(400px, calc(100vw - 32px)); }
+  .auth { display: flex; flex-direction: column; gap: 12px; padding: 20px; }
+  .auth h2 { margin: 0; font-size: 1.2rem; }
+  .auth .note { margin: 0; font-size: .85rem; }
+  .tabs { display: flex; gap: 4px; padding: 4px; border-radius: 10px; background: var(--panel-2); }
+  .tabs button {
+    flex: 1;
+    padding: 8px;
+    border: 0;
+    border-radius: 7px;
+    background: none;
+    color: var(--muted);
+    font: inherit;
+    font-weight: 600;
+    cursor: pointer;
+  }
+  .tabs button[aria-selected="true"] { background: var(--panel); color: var(--accent); }
+  .field { display: flex; flex-direction: column; gap: 4px; color: var(--muted); font-size: .88rem; }
+  .field input {
+    font: inherit;
+    font-size: 1rem;
+    color: var(--text);
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 10px 12px;
+  }
+  .field input:focus { outline: 2px solid var(--accent); outline-offset: 1px; }
+  #authMsg { margin: 0; min-height: 1.4em; color: var(--danger); font-size: .9rem; }
+  .auth .actions { display: flex; justify-content: flex-end; gap: 10px; }
+  .note.bad { color: var(--danger); }
+
+  /* ---------- Administración ---------- */
+  .admin-title { margin: 8px 0 4px; font-size: 1.6rem; }
+  .stats { display: flex; flex-wrap: wrap; gap: 12px; margin: 16px 0 20px; }
+  .stat { min-width: 140px; padding: 12px 16px; border: 1px solid var(--border); border-radius: 12px; background: var(--panel); }
+  .stat strong { display: block; font-size: 1.5rem; font-variant-numeric: tabular-nums; }
+  .stat span { color: var(--muted); font-size: .85rem; }
+  .users { display: flex; flex-direction: column; gap: 12px; margin-top: 10px; }
+  .user-card { padding: 14px; border: 1px solid var(--border); border-radius: 12px; background: var(--panel); }
+  .user-card h3 { display: flex; align-items: center; gap: 8px; margin: 0 0 4px; font-size: 1rem; }
+  .user-card .meta { margin: 0; color: var(--muted); font-size: .82rem; }
+  .user-card details { margin-top: 8px; padding-top: 8px; border-top: 1px solid var(--border); }
+  .user-card summary { cursor: pointer; }
+  .user-card summary small { color: var(--muted); }
+  .user-card ol { margin: 8px 0 0; padding-left: 22px; columns: 2 220px; font-size: .88rem; }
 </style>
 </head>
 <body>
@@ -558,7 +627,14 @@
       <a href="#inicio" data-view="inicio">Inicio</a>
       <a href="#cartas" data-view="cartas">Cartas</a>
       <a href="#mazos" data-view="mazos">Mazos</a>
+      <a href="#admin" data-view="admin" id="navAdmin" hidden>Admin</a>
     </nav>
+    <div class="account">
+      <button id="loginBtn" class="plain small" type="button">Entrar</button>
+      <span id="who" class="who" hidden></span>
+      <span id="whoAdmin" class="badge-admin" hidden>Admin</span>
+      <button id="logoutBtn" class="plain small" type="button" hidden>Salir</button>
+    </div>
   </div>
 </header>
 
@@ -617,7 +693,8 @@
       <button id="deckNew" class="plain" type="button">+ Nuevo mazo</button>
     </div>
     <ul id="deckList"></ul>
-    <p class="note">Formato Commander. Los mazos se guardan en este navegador.</p>
+    <p class="note">Formato Commander.</p>
+    <p id="deckStore" class="note" role="status" aria-live="polite">Los mazos se guardan en este navegador.</p>
   </aside>
 
   <div>
@@ -648,6 +725,20 @@
 </div>
 </section>
 
+<section id="view-admin" hidden>
+<div class="page">
+  <h1 class="admin-title">Panel de administración</h1>
+  <p class="note">Solo lo ve la cuenta de administrador. Aquí irán también las secciones de prueba.</p>
+  <div id="adminStats" class="stats"></div>
+  <div class="side-head">
+    <h2>Usuarios y mazos</h2>
+    <button id="adminReload" class="plain small" type="button">Actualizar</button>
+  </div>
+  <p id="adminMsg" class="note" role="status" aria-live="polite"></p>
+  <div id="adminUsers" class="users"></div>
+</div>
+</section>
+
 <footer>
   Datos, imágenes y precios servidos por <a href="https://scryfall.com" target="_blank" rel="noopener">Scryfall</a>
   (precios orientativos de Cardmarket en € y TCGplayer en $, actualizados a diario).
@@ -670,8 +761,34 @@
   </div>
 </dialog>
 
+<dialog id="authDlg" aria-labelledby="authTitle">
+  <form id="authForm" class="auth" novalidate>
+    <h2 id="authTitle">Tu cuenta</h2>
+    <div class="tabs" role="tablist" aria-label="Entrar o crear cuenta">
+      <button id="tabLogin" type="button" role="tab" aria-selected="true">Entrar</button>
+      <button id="tabSignup" type="button" role="tab" aria-selected="false">Crear cuenta</button>
+    </div>
+    <label class="field">Usuario
+      <input id="authUser" type="text" autocomplete="username" autocapitalize="none" spellcheck="false" maxlength="20" required>
+    </label>
+    <label class="field">Contraseña
+      <input id="authPass" type="password" autocomplete="current-password" required>
+    </label>
+    <label id="authPass2Row" class="field" hidden>Repite la contraseña
+      <input id="authPass2" type="password" autocomplete="new-password">
+    </label>
+    <p id="authHint" class="note" hidden>Usuario de 3 a 20 caracteres: letras sin acentos, números, guion o guion bajo. Contraseña de al menos 6 caracteres.</p>
+    <p id="authMsg" role="alert"></p>
+    <div class="actions">
+      <button id="authCancel" class="plain" type="button">Cancelar</button>
+      <button id="authGo" class="plain primary" type="submit">Entrar</button>
+    </div>
+  </form>
+</dialog>
+
 <div id="zoom" popover="manual" aria-hidden="true"><img alt=""></div>
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.115.0/dist/umd/supabase.min.js"></script>
 <script>
 (function () {
   'use strict';
@@ -1199,6 +1316,10 @@
   }
 
   function saveDecks() {
+    if (user) {
+      queueSave(currentId);   // con cuenta: se guarda en la nube
+      return true;
+    }
     try {
       localStorage.setItem(STORE, JSON.stringify(decks));
       return true;
@@ -1501,7 +1622,13 @@
     currentId = decks.length ? decks[0].id : null;
     $addQ.value = '';
     $addResults.textContent = '';
-    commit('');
+    if (user) {
+      removeRemote(deck.id);
+      renderDecks();
+      say('');
+    } else {
+      commit('');
+    }
   });
 
   /* ---------- Importar y copiar listas ---------- */
@@ -1767,7 +1894,7 @@
 
   /* ---------- Carta ampliada al dejar el ratón encima ---------- */
 
-  var ZOOM_DELAY = 500;   // milisegundos con el ratón quieto sobre la carta
+  var ZOOM_DELAY = 1000;   // milisegundos con el ratón quieto sobre la carta
   var ZOOMABLE = '.card img, .tile .art, .pick img, .arts button';
   var $zoom = document.getElementById('zoom');
   var $zoomImg = $zoom.querySelector('img');
@@ -1835,18 +1962,362 @@
   document.addEventListener('scroll', hideZoom, true);
   window.addEventListener('blur', hideZoom);
 
+  /* ---------- Cuentas de usuario (Supabase) ---------- */
+
+  // La clave es pública a propósito: lo que cada usuario puede ver o cambiar
+  // lo deciden las reglas de seguridad de la base de datos, no esta página.
+  var SB_URL = 'https://jzunhuxwcddttopuvoym.supabase.co';
+  var SB_KEY = 'sb_publishable_H0XcfMJ2Cq7O2s-pdnCrng_DutvJJsI';
+  // Se entra con usuario y contraseña; por debajo Supabase necesita un correo,
+  // así que se usa uno inventado a partir del nombre (nunca se envía nada).
+  var EMAIL_DOMAIN = 'usuarios.cartas-magic.app';
+  var USERNAME = /^[a-z0-9_-]{3,20}$/;
+
+  var sb = null;
+  try {
+    if (window.supabase) sb = window.supabase.createClient(SB_URL, SB_KEY);
+  } catch (err) {
+    console.error(err);
+  }
+  var user = null;
+  var profile = null;
+  var dirty = {};        // mazos con cambios pendientes de subir
+  var flushTimer;
+  var authToken = 0;
+
+  var $loginBtn = document.getElementById('loginBtn');
+  var $logoutBtn = document.getElementById('logoutBtn');
+  var $who = document.getElementById('who');
+  var $whoAdmin = document.getElementById('whoAdmin');
+  var $navAdmin = document.getElementById('navAdmin');
+  var $deckStore = document.getElementById('deckStore');
+  var $authDlg = document.getElementById('authDlg');
+  var $authForm = document.getElementById('authForm');
+  var $authUser = document.getElementById('authUser');
+  var $authPass = document.getElementById('authPass');
+  var $authPass2 = document.getElementById('authPass2');
+  var $authMsg = document.getElementById('authMsg');
+  var $authGo = document.getElementById('authGo');
+  var $tabLogin = document.getElementById('tabLogin');
+  var $tabSignup = document.getElementById('tabSignup');
+  var authMode = 'login';
+
+  function isAdmin() {
+    return !!(user && profile && profile.is_admin);
+  }
+
+  function storeNote(text, bad) {
+    $deckStore.textContent = text;
+    $deckStore.classList.toggle('bad', !!bad);
+  }
+
+  function guestNote() {
+    storeNote('Los mazos se guardan en este navegador. Entra en tu cuenta para tenerlos en la nube.');
+  }
+
+  function queueSave(id) {
+    if (id) dirty[id] = true;
+    clearTimeout(flushTimer);
+    flushTimer = setTimeout(flush, 700);
+    storeNote('Guardando…');
+  }
+
+  async function flush() {
+    clearTimeout(flushTimer);
+    var ids = Object.keys(dirty);
+    dirty = {};
+    if (!user || !sb) return;
+    var rows = ids
+      .map(function (id) { return decks.find(function (d) { return d.id === id; }); })
+      .filter(Boolean)
+      .map(function (d) {
+        return { id: d.id, user_id: user.id, name: d.name, cards: d.cards, updated_at: new Date().toISOString() };
+      });
+    if (!rows.length) { storeNote('Guardado en tu cuenta.'); return; }
+    var res = await sb.from('decks').upsert(rows);
+    if (res.error) {
+      ids.forEach(function (id) { dirty[id] = true; });
+      storeNote('No se ha podido guardar en la nube. Se reintentará con el próximo cambio.', true);
+      console.error(res.error);
+    } else {
+      storeNote('Guardado en tu cuenta.');
+    }
+  }
+
+  async function removeRemote(id) {
+    delete dirty[id];
+    var res = await sb.from('decks').delete().eq('id', id);
+    if (res.error) {
+      storeNote('No se ha podido borrar el mazo de la nube.', true);
+      console.error(res.error);
+    }
+  }
+
+  // Si se cierra la página con cambios sin subir, avisa.
+  window.addEventListener('beforeunload', function (ev) {
+    if (!Object.keys(dirty).length) return;
+    flush();
+    ev.preventDefault();
+    ev.returnValue = '';
+  });
+
+  async function loadCloud(mine) {
+    storeNote('Cargando tus mazos…');
+    var res = await sb.from('decks').select('id,name,cards').eq('user_id', user.id).order('created_at');
+    if (mine !== authToken) return;
+    if (res.error) {
+      storeNote('No se han podido cargar tus mazos.', true);
+      console.error(res.error);
+      return;
+    }
+    var cloud = res.data.map(function (r) {
+      return { id: r.id, name: r.name, cards: Array.isArray(r.cards) ? r.cards : [] };
+    });
+
+    // Los mazos hechos sin cuenta en este navegador pasan a la cuenta.
+    var moved = 0;
+    var have = {};
+    cloud.forEach(function (d) { have[d.id] = true; });
+    var toMove = readDecks().filter(function (d) { return !have[d.id]; });
+    if (toMove.length) {
+      var up = await sb.from('decks').insert(toMove.map(function (d) {
+        return { id: d.id, user_id: user.id, name: d.name, cards: d.cards };
+      }));
+      if (mine !== authToken) return;
+      if (up.error) {
+        console.error(up.error);
+      } else {
+        cloud = cloud.concat(toMove);
+        moved = toMove.length;
+        try { localStorage.removeItem(STORE); } catch (err) { /* sin acceso al almacenamiento */ }
+      }
+    }
+
+    decks = cloud;
+    currentId = decks.length ? decks[0].id : null;
+    if (moved) storeNote((moved === 1 ? 'Se ha pasado 1 mazo' : 'Se han pasado ' + moved + ' mazos') + ' de este navegador a tu cuenta.');
+    else storeNote('Guardado en tu cuenta.');
+    renderDecks();
+  }
+
+  function setUserUI() {
+    var admin = isAdmin();
+    $loginBtn.hidden = !!user;
+    $logoutBtn.hidden = !user;
+    $who.hidden = !user;
+    $who.textContent = profile ? profile.username : '';
+    $who.title = $who.textContent;
+    $whoAdmin.hidden = !admin;
+    $navAdmin.hidden = !admin;
+    if (location.hash === '#admin') route();
+  }
+
+  async function onUser(u) {
+    if (u && user && u.id === user.id) return;   // solo se ha renovado la sesión
+    var mine = ++authToken;
+    if (!u) {
+      user = null;
+      profile = null;
+      dirty = {};
+      decks = readDecks();
+      currentId = decks.length ? decks[0].id : null;
+      guestNote();
+      setUserUI();
+      renderDecks();
+      return;
+    }
+    user = u;
+    profile = null;
+    decks = [];
+    currentId = null;
+    renderDecks();
+    var p = await sb.from('profiles').select('username,is_admin').eq('id', u.id).maybeSingle();
+    if (mine !== authToken) return;
+    profile = p.data || { username: (u.email || '').split('@')[0], is_admin: false };
+    setUserUI();
+    await loadCloud(mine);
+  }
+
+  function authError(err) {
+    var m = String((err && err.message) || '').toLowerCase();
+    if (/invalid login credentials/.test(m)) return 'Usuario o contraseña incorrectos.';
+    if (/already registered|already exists|database error saving new user/.test(m)) return 'Ese nombre de usuario ya está cogido.';
+    if (/password/.test(m) && /(at least|short|weak|characters)/.test(m)) return 'La contraseña es demasiado corta: mínimo 6 caracteres.';
+    if (/email not confirmed/.test(m)) return 'La cuenta existe pero aún no está activada.';
+    if (/rate limit|too many/.test(m)) return 'Demasiados intentos seguidos. Espera un poco y vuelve a probar.';
+    if (/signups? not allowed|disabled/.test(m)) return 'Ahora mismo no se pueden crear cuentas nuevas.';
+    return 'No se ha podido completar: ' + ((err && err.message) || 'error desconocido') + '.';
+  }
+
+  function setAuthMode(mode) {
+    authMode = mode;
+    var signup = mode === 'signup';
+    $tabLogin.setAttribute('aria-selected', String(!signup));
+    $tabSignup.setAttribute('aria-selected', String(signup));
+    document.getElementById('authPass2Row').hidden = !signup;
+    document.getElementById('authHint').hidden = !signup;
+    $authPass.autocomplete = signup ? 'new-password' : 'current-password';
+    $authGo.textContent = signup ? 'Crear cuenta' : 'Entrar';
+    $authMsg.textContent = '';
+  }
+
+  $tabLogin.addEventListener('click', function () { setAuthMode('login'); });
+  $tabSignup.addEventListener('click', function () { setAuthMode('signup'); });
+
+  $loginBtn.addEventListener('click', function () {
+    $authForm.reset();
+    setAuthMode('login');
+    $authDlg.showModal();
+    $authUser.focus();
+  });
+  document.getElementById('authCancel').addEventListener('click', function () { $authDlg.close(); });
+
+  $authForm.addEventListener('submit', async function (ev) {
+    ev.preventDefault();
+    var name = $authUser.value.trim().toLowerCase();
+    var pass = $authPass.value;
+    var signup = authMode === 'signup';
+    if (!USERNAME.test(name)) {
+      $authMsg.textContent = 'El usuario debe tener de 3 a 20 caracteres: letras sin acentos, números, guion o guion bajo.';
+      return;
+    }
+    // También lo impide la base de datos; esto solo da un mensaje más claro.
+    if (signup && name.indexOf('admin') >= 0) { $authMsg.textContent = 'Ese nombre está reservado. Elige otro.'; return; }
+    if (!pass) { $authMsg.textContent = 'Escribe la contraseña.'; return; }
+    if (signup && pass.length < 6) { $authMsg.textContent = 'La contraseña debe tener al menos 6 caracteres.'; return; }
+    if (signup && pass !== $authPass2.value) { $authMsg.textContent = 'Las contraseñas no coinciden.'; return; }
+
+    $authGo.disabled = true;
+    $authMsg.textContent = '';
+    try {
+      var email = name + '@' + EMAIL_DOMAIN;
+      var res = signup
+        ? await sb.auth.signUp({ email: email, password: pass, options: { data: { username: name } } })
+        : await sb.auth.signInWithPassword({ email: email, password: pass });
+      if (res.error) {
+        $authMsg.textContent = authError(res.error);
+      } else if (!res.data.session) {
+        $authMsg.textContent = 'La cuenta se ha creado, pero falta activar el acceso sin confirmar correo en Supabase.';
+      } else {
+        $authDlg.close();
+      }
+    } catch (err) {
+      $authMsg.textContent = 'No se ha podido conectar con el servidor de cuentas.';
+      console.error(err);
+    } finally {
+      $authGo.disabled = false;
+    }
+  });
+
+  $logoutBtn.addEventListener('click', async function () {
+    $logoutBtn.disabled = true;
+    try {
+      await flush();               // sube lo pendiente antes de salir
+      await sb.auth.signOut();
+    } finally {
+      $logoutBtn.disabled = false;
+    }
+    if (location.hash === '#admin') location.hash = '#inicio';
+  });
+
+  if (sb) {
+    sb.auth.onAuthStateChange(function (event, session) {
+      // Fuera del aviso de Supabase, para no bloquear su gestión de la sesión.
+      setTimeout(function () { onUser(session ? session.user : null); }, 0);
+    });
+  } else {
+    $loginBtn.disabled = true;
+    $loginBtn.title = 'No se ha podido conectar con el servidor de cuentas.';
+    guestNote();
+  }
+
+  /* ---------- Panel de administración ---------- */
+
+  var $adminStats = document.getElementById('adminStats');
+  var $adminUsers = document.getElementById('adminUsers');
+  var $adminMsg = document.getElementById('adminMsg');
+  var day = new Intl.DateTimeFormat('es-ES', { dateStyle: 'medium' });
+  var adminToken = 0;
+
+  function stat(value, label) {
+    var box = el('div', 'stat');
+    box.appendChild(el('strong', null, num.format(value)));
+    box.appendChild(el('span', null, label));
+    return box;
+  }
+
+  async function loadAdmin() {
+    if (!isAdmin()) return;
+    var mine = ++adminToken;
+    $adminMsg.textContent = 'Cargando…';
+    $adminMsg.classList.remove('bad');
+    var both = await Promise.all([
+      sb.from('profiles').select('id,username,is_admin,created_at').order('created_at'),
+      sb.from('decks').select('id,user_id,name,cards,updated_at').order('updated_at', { ascending: false })
+    ]);
+    if (mine !== adminToken) return;
+    var err = both[0].error || both[1].error;
+    if (err) {
+      $adminMsg.textContent = 'No se han podido cargar los datos.';
+      $adminMsg.classList.add('bad');
+      console.error(err);
+      return;
+    }
+    var people = both[0].data;
+    var all = both[1].data.map(function (d) {
+      return { id: d.id, user_id: d.user_id, name: d.name, updated_at: d.updated_at, cards: Array.isArray(d.cards) ? d.cards : [] };
+    });
+    var cardsTotal = all.reduce(function (n, d) { return n + countCards(d); }, 0);
+
+    $adminStats.textContent = '';
+    $adminStats.appendChild(stat(people.length, people.length === 1 ? 'usuario' : 'usuarios'));
+    $adminStats.appendChild(stat(all.length, all.length === 1 ? 'mazo' : 'mazos'));
+    $adminStats.appendChild(stat(cardsTotal, 'cartas en mazos'));
+
+    $adminUsers.textContent = '';
+    people.forEach(function (p) {
+      var mineDecks = all.filter(function (d) { return d.user_id === p.id; });
+      var card = el('article', 'user-card');
+      var h = el('h3', null, p.username);
+      if (p.is_admin) h.appendChild(el('span', 'badge-admin', 'Admin'));
+      card.appendChild(h);
+      card.appendChild(el('p', 'meta', 'Alta: ' + day.format(new Date(p.created_at)) + ' · '
+        + (mineDecks.length === 1 ? '1 mazo' : mineDecks.length + ' mazos')));
+
+      mineDecks.forEach(function (d) {
+        var det = el('details');
+        var sum = el('summary', null, (d.name || 'Mazo sin nombre') + ' ');
+        sum.appendChild(el('small', null, countCards(d) + '/' + LIMIT + ' cartas · actualizado ' + day.format(new Date(d.updated_at))));
+        det.appendChild(sum);
+        var ol = el('ol');
+        d.cards
+          .filter(function (c) { return c.sec !== 'tokens'; })
+          .sort(function (a, b) { return (b.sec === 'comandante') - (a.sec === 'comandante') || a.name.localeCompare(b.name); })
+          .forEach(function (c) { ol.appendChild(el('li', null, c.qty + ' ' + c.name + (c.sec === 'comandante' ? ' (comandante)' : ''))); });
+        if (!ol.children.length) ol.appendChild(el('li', null, 'Vacío'));
+        det.appendChild(ol);
+        card.appendChild(det);
+      });
+      $adminUsers.appendChild(card);
+    });
+    $adminMsg.textContent = '';
+  }
+
+  document.getElementById('adminReload').addEventListener('click', loadAdmin);
+
   /* ---------- Secciones ---------- */
 
   var views = {
     inicio: document.getElementById('view-inicio'),
     cartas: document.getElementById('view-cartas'),
-    mazos: document.getElementById('view-mazos')
+    mazos: document.getElementById('view-mazos'),
+    admin: document.getElementById('view-admin')
   };
   var cardsLoaded = false;
 
   function route() {
     var name = location.hash.slice(1);
-    if (!views[name]) name = 'inicio';
+    if (!views[name] || (name === 'admin' && !isAdmin())) name = 'inicio';
     Object.keys(views).forEach(function (k) { views[k].hidden = k !== name; });
     document.querySelectorAll('nav a').forEach(function (a) {
       if (a.dataset.view === name) a.setAttribute('aria-current', 'page');
@@ -1854,6 +2325,7 @@
     });
     if (name === 'cartas' && !cardsLoaded) { cardsLoaded = true; load(true); }
     if (name === 'mazos') renderDecks();
+    if (name === 'admin') loadAdmin();
     window.scrollTo(0, 0);
   }
 
