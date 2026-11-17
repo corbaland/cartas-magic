@@ -3,7 +3,8 @@ import { useNavigate } from 'react-router'
 import { game, useGame } from '../../../features/game/store'
 import { CardDetailById } from '../../../components/CardDetailById'
 import { Board } from './Board'
-import { MyArea } from './MyArea'
+import { TopPanel } from './TopPanel'
+import { DiceOverlay } from './DiceOverlay'
 import { Seats } from './Seats'
 import { Side } from './Side'
 import { Menu } from './Menu'
@@ -42,14 +43,15 @@ export function Table() {
   return (
     <div className={'gtable' + (sideHidden ? ' noside' : '')}>
       <div className="gmain" data-zoom-area>
+        <TopPanel onLeave={() => navigate('/jugar')} />
         <Board />
-        <MyArea onLeave={() => navigate('/jugar')} />
       </div>
       <Seats />
       <Side />
       <Menu />
       <Viewer />
       <TokensDialog />
+      <DiceOverlay />
       <CardDetailById id={detailId} onClose={game.closeDetail} />
     </div>
   )

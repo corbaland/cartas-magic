@@ -47,6 +47,8 @@ export interface Card {
   purchase_uris?: { cardmarket?: string; tcgplayer?: string }
   scryfall_uri?: string
   prints_search_uri?: string
+  /** Cartas relacionadas (por ejemplo, las fichas que crea). */
+  all_parts?: { id: string; component: string; name: string; type_line?: string }[]
 }
 
 export interface CardList {
@@ -125,7 +127,7 @@ export async function searchToAdd(text: string, tokens: boolean, signal?: AbortS
   return starts.concat(rest).slice(0, 12)
 }
 
-export type Identifier = { name: string } | { set: string; collector_number: string }
+export type Identifier = { id: string } | { name: string } | { set: string; collector_number: string }
 
 const wait = (ms: number) => new Promise((r) => setTimeout(r, ms))
 

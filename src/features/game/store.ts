@@ -70,6 +70,10 @@ interface GameState {
   /** Ficha de carta abierta (id de Scryfall). */
   detailId: string | null
   tokensOpen: boolean
+  /** Cartas de mi campo seleccionadas a la vez (arrastrando un recuadro). */
+  sel: string[]
+  /** Última tirada de dado o moneda, para enseñarla en grande a todos. */
+  dice: { id: string | number; who: string; sides: number; value: number } | null
 }
 
 function readSideHidden(): boolean {
@@ -97,6 +101,8 @@ const initial = {
   viewer: null,
   detailId: null,
   tokensOpen: false,
+  sel: [] as string[],
+  dice: null,
 }
 
 export const useGame = create<GameState>(() => ({ ...initial, sideHidden: readSideHidden() }))
@@ -467,7 +473,15 @@ function pushLog(e: LogEntry, quiet = false) {
   if (log.length > 300) log = log.slice(log.length - 300)
   const unread = !quiet && get().sideHidden && e.kind === 'chat' && e.user_id && e.user_id !== myId() ? 1 : 0
   set((s) => ({ log, unread: s.unread + unread }))
+  // Las tiradas de dado o moneda se enseñan en grande a todos los de la mesa.
+  const d = e.data?.dice
+  if (!quiet && d && Number.isInteger(d.sides) && Number.isInteger(d.value)) {
+    set({ dice: { id: e.id, who: e.username || '?', sides: d.sides, value: d.value } })
+  }
 }
+
+/** Número máximo de cartas en la zona de mando (comandante y compañero). */
+const CMD_MAX = 2
 
 /* ---------- Cartas y zonas (sobre la copia de trabajo) ---------- */
 
@@ -601,9 +615,14 @@ export const game = {
     const loc = locate(g0, iid)
     if (!loc) return
     const real = realCard(loc.card, s.priv)
-    if (real.cmd && loc.zone !== 'command' && to !== 'command' && to !== 'battlefield' && !opts.noAsk) {
+    const cmdFull = loc.zone !== 'command' && s.pub.zones.command.length >= CMD_MAX
+    if (real.cmd && loc.zone !== 'command' && to !== 'command' && to !== 'battlefield' && !opts.noAsk && !cmdFull) {
       const dest = to === 'library' && opts.bottom ? 'al fondo de la biblioteca' : TO[to]
       if (window.confirm(`«${real.name}» es tu comandante. ¿Lo devuelves a la zona de mando en lugar de moverlo ${dest}?`)) to = 'command'
+    }
+    if (to === 'command' && cmdFull) {
+      toast(`La zona de mando solo admite ${CMD_MAX} cartas (comandante y compañero).`, true)
+      return
     }
     act((g) => {
       const res = moveCard(g, iid, to, opts)
@@ -616,6 +635,73 @@ export const game = {
       }
       return describeMove(res, to, opts) + extra + '.'
     })
+  },
+
+  /* Varias cartas a la vez (selección del campo de batalla) */
+
+  setSel(ids: string[]) {
+    const cur = get().sel
+    if (ids.length === cur.length && ids.every((id, i) => id === cur[i])) return
+    set({ sel: ids })
+  },
+
+  clearSel() {
+    if (get().sel.length) set({ sel: [] })
+  },
+
+  /** Gira o endereza a la vez las cartas indicadas. */
+  tapMany(ids: string[], tapped: boolean) {
+    act((g) => {
+      let n = 0
+      for (const iid of ids) {
+        const c = onField(g, iid)
+        if (c && !!c.tapped !== tapped) {
+          c.tapped = tapped
+          n++
+        }
+      }
+      if (!n) return false
+      return `${tapped ? 'gira' : 'endereza'} ${plural(n, 'carta', 'cartas')}.`
+    })
+  },
+
+  /** Recoloca a la vez varias cartas del campo. */
+  placeMany(moves: { iid: string; x: number; y: number }[]) {
+    act((g) => {
+      for (const m of moves) {
+        const c = onField(g, m.iid)
+        if (!c) continue
+        c.x = Math.round(clamp(m.x, 0, 94) * 10) / 10
+        c.y = Math.round(clamp(m.y, 0, 88) * 10) / 10
+      }
+      return null
+    })
+  },
+
+  /** Mueve a otra zona todas las cartas indicadas (los comandantes pueden volver al mando). */
+  moveMany(ids: string[], to: Zone, opts: MoveOpts = {}) {
+    const s = get()
+    if (!s.pub || !s.priv) return
+    if (ids.length === 1) return game.move(ids[0], to, opts)
+    const cmds = s.pub.zones.battlefield.filter((c) => ids.includes(c.iid) && realCard(c, s.priv).cmd).map((c) => c.iid)
+    const toCommand =
+      cmds.length > 0 &&
+      to !== 'command' &&
+      to !== 'battlefield' &&
+      window.confirm('En la selección hay comandantes. ¿Los devuelves a la zona de mando en lugar de moverlos?')
+    act((g) => {
+      let n = 0
+      for (const iid of ids) {
+        let dest = toCommand && cmds.includes(iid) ? 'command' : to
+        if (dest === 'command' && g.pub.zones.command.length >= CMD_MAX) dest = to === 'command' ? 'graveyard' : to
+        if (dest === 'command' && to === 'command' && g.pub.zones.command.length >= CMD_MAX) continue
+        if (moveCard(g, iid, dest as Zone, opts)) n++
+      }
+      if (!n) return false
+      const dest = to === 'library' && opts.bottom ? 'al fondo de la biblioteca' : TO[to]
+      return `mueve ${plural(n, 'carta', 'cartas')} del campo de batalla ${dest}.`
+    })
+    set({ sel: [] })
   },
 
   /** Recoloca una carta en la mano (o la trae a la mano en esa posición). */
@@ -855,7 +941,9 @@ export const game = {
 
   roll(sides: number) {
     const v = randInt(sides) + 1
-    void addLog(sides === 2 ? `lanza una moneda: ${v === 1 ? 'cara' : 'cruz'}.` : `lanza un d${sides}: ${v}.`)
+    void addLog(sides === 2 ? `lanza una moneda: ${v === 1 ? 'cara' : 'cruz'}.` : `lanza un d${sides}: ${v}.`, {
+      dice: { sides, value: v },
+    })
   },
 
   chat(text: string) {
@@ -930,6 +1018,10 @@ export const game = {
 
   closeDetail() {
     set({ detailId: null })
+  },
+
+  closeDice() {
+    if (get().dice) set({ dice: null })
   },
 
   openTokens(open: boolean) {

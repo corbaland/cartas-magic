@@ -92,5 +92,5 @@ export interface LogEntry {
   user_id?: string | null
   username?: string | null
   text: string
-  data?: { cards?: LogCard[] } | null
+  data?: { cards?: LogCard[]; dice?: { sides: number; value: number } } | null
 }

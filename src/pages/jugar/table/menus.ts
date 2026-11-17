@@ -127,3 +127,29 @@ export function diceMenu(x: number, y: number) {
     y,
   )
 }
+
+/** Menú para varias cartas seleccionadas del campo. */
+export function groupMenu(ids: string[], x: number, y: number) {
+  const field = useGame.getState().pub?.zones.battlefield ?? []
+  const cards = field.filter((c) => ids.includes(c.iid))
+  if (!cards.length) return
+  const n = cards.length
+  const allTapped = cards.every((c) => c.tapped)
+  const to = (z: Zone, opts?: Parameters<typeof game.moveMany>[2]) => () => game.moveMany(ids, z, opts)
+  game.openMenu(
+    [
+      { title: `${plural(n, 'carta seleccionada', 'cartas seleccionadas')}` },
+      { label: allTapped ? 'Enderezar todas' : 'Girar todas', fn: () => game.tapMany(ids, !allTapped) },
+      '-',
+      { label: 'A la mano', fn: to('hand') },
+      { label: 'Al cementerio', fn: to('graveyard') },
+      { label: 'Al exilio', fn: to('exile') },
+      { label: 'Arriba de la biblioteca', fn: to('library') },
+      { label: 'Fondo de la biblioteca', fn: to('library', { bottom: true }) },
+      '-',
+      { label: 'Quitar la selección', fn: () => game.clearSel() },
+    ],
+    x,
+    y,
+  )
+}

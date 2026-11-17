@@ -14,13 +14,15 @@ interface Props {
   flat?: boolean
   priv?: PrivateState | null
   children?: ReactNode
+  /** Forma parte de la selección múltiple. */
+  selected?: boolean
 }
 
 /**
  * Una carta de la mesa. Los datos `data-*` los usa el control de ratón de la mesa
  * (arrastrar, doble clic, menú) y `data-zoom` la carta ampliada.
  */
-export function GCard({ card: c, zone, own = false, uid, flat = false, priv = null, children }: Props) {
+export function GCard({ card: c, zone, own = false, uid, flat = false, priv = null, selected = false, children }: Props) {
   const real = own && c.fd ? realCard(c, priv) : c
   const src = c.fd && !own ? null : safeImg(real.flipped && real.imgBack ? real.imgBack : real.img)
   const style =
@@ -28,7 +30,7 @@ export function GCard({ card: c, zone, own = false, uid, flat = false, priv = nu
       ? { left: `${clamp(Number(c.x) || 0, 0, 96)}%`, top: `${clamp(Number(c.y) || 0, 0, 92)}%` }
       : undefined
   const counters = Object.entries(c.counters ?? {})
-  const cls = ['gcard', c.tapped && 'tapped', c.fd && 'fd', c.token && 'token', c.cmd && 'cmdr'].filter(Boolean).join(' ')
+  const cls = ['gcard', c.tapped && 'tapped', c.fd && 'fd', c.token && 'token', c.cmd && 'cmdr', selected && 'sel'].filter(Boolean).join(' ')
 
   return (
     <div

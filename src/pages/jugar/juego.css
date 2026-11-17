@@ -193,10 +193,7 @@ body.in-table .site-footer { display: none; }
 .gcount { color: var(--muted); }
 .gturn { padding: 2px 8px; border-radius: 99px; background: var(--accent); color: #1a1300; font-size: .75rem; font-weight: 700; }
 
-/* Mi panel */
-.gme { display: flex; flex-direction: column; gap: 8px; flex: none; }
-.gbottom { display: flex; align-items: flex-end; gap: 12px; }
-@media (max-width: 700px) { .gbottom { flex-wrap: wrap; } }
+/* Mi panel (arriba, siempre visible) */
 .gpanel { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 14px; padding: 8px 10px; border: 1px solid var(--border); border-radius: 12px; background: var(--panel); }
 .gwho { display: flex; flex-direction: column; gap: 2px; min-width: 90px; }
 .gwho .note { margin: 0; font-size: .8rem; }
@@ -222,7 +219,6 @@ body.in-table .site-footer { display: none; }
 .gacts .plain.small { padding: 6px 10px; font-size: .85rem; }
 
 /* Zonas */
-.gzones { --cw: 78px; display: flex; gap: 10px; align-items: flex-end; flex: none; }
 .gzone {
   position: relative;
   display: flex;
@@ -255,7 +251,6 @@ button.gzone { cursor: pointer; }
 }
 .gzone-l { position: absolute; left: 6px; bottom: -18px; color: var(--muted); font-size: .72rem; pointer-events: none; }
 .gcmdz { flex-wrap: nowrap; }
-.gzones { padding-bottom: 18px; }
 
 /* Mano */
 .ghand {
@@ -369,3 +364,77 @@ button.gzone { cursor: pointer; }
 @media (prefers-reduced-motion: reduce) {
   .gcard { transition: none; }
 }
+
+/* ---------- Disposición de la mesa: panel arriba, campo y franja de zonas ---------- */
+.gpanel { flex: none; }
+.gboard { min-height: 0; }
+.gbf.mine { min-height: 240px; }
+.gbf.opp { flex: 1 1 auto; min-height: 240px; }
+
+/* Franja de abajo: mano · biblioteca · cementerio · exilio · mando */
+.gstrip { --cw: 84px; display: flex; align-items: stretch; gap: 10px; flex: none; padding-bottom: 18px; }
+.gstrip .gzone { flex: none; align-items: center; justify-content: center; }
+.gstrip .ghand { --cw: 96px; position: relative; flex: 1 1 auto; min-height: calc(96px * 680 / 488 + 20px); padding: 10px 10px 8px 38px; }
+.ghand .gzone-l { left: 10px; }
+.ghand.opp .gcard { cursor: default; margin-left: -58px; }
+.ghand.opp .gcard:first-child { margin-left: -28px; }
+.ghand.opp .gcard:hover { transform: none; box-shadow: 0 2px 6px rgba(0, 0, 0, .35); }
+.ghand.opp .gbf-empty { align-self: center; }
+.gcard.back .gback { width: 100%; height: 100%; }
+.gpile, .gcmdz { cursor: pointer; }
+.gpile .gcard, .gcmdz .gcard { box-shadow: 2px 2px 0 rgba(0, 0, 0, .35), 4px 4px 0 rgba(0, 0, 0, .2); }
+div.glib { cursor: default; }
+@media (max-width: 1100px) {
+  .gstrip { flex-wrap: wrap; }
+  .gstrip .ghand { flex-basis: 100%; }
+}
+
+/* Selección de varias cartas */
+.gcard.sel { box-shadow: 0 0 0 3px var(--accent), 0 0 16px rgba(224, 165, 38, .55); }
+.gmarquee { position: absolute; z-index: 20; border: 1px dashed var(--accent); border-radius: 4px; background: rgba(224, 165, 38, .12); pointer-events: none; }
+.gghost-n { position: absolute; top: -10px; right: -10px; padding: 2px 8px; border-radius: 99px; background: var(--accent); color: #1a1300; font-size: .8rem; font-weight: 800; }
+
+/* Registro y chat, separados */
+.gpane { display: flex; flex-direction: column; min-height: 0; }
+.glog-pane { flex: 1 1 55%; border-bottom: 1px solid var(--border); }
+.gchat-pane { flex: 1 1 45%; }
+.gpane-h { margin: 0; padding: 8px 12px 4px; color: var(--muted); font-size: .72rem; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; }
+.glog-empty { color: var(--muted); border-bottom: 0 !important; font-style: italic; }
+
+/* Dado y moneda en grande */
+.gdice {
+  position: fixed;
+  inset: 0;
+  z-index: 75;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 18px;
+  background: radial-gradient(circle at 50% 45%, rgba(0, 0, 0, .55), rgba(0, 0, 0, .25) 60%, transparent 80%);
+  cursor: pointer;
+  animation: gdice-in .2s ease-out;
+}
+.gdice-box {
+  display: grid;
+  place-items: center;
+  width: 150px;
+  height: 150px;
+  color: #1a1300;
+  font-size: 4rem;
+  font-weight: 900;
+  font-variant-numeric: tabular-nums;
+  background: linear-gradient(145deg, #ffe9a8, #d99a1c);
+  box-shadow: 0 20px 50px rgba(0, 0, 0, .6), inset 0 -6px 0 rgba(0, 0, 0, .18);
+}
+.gdice-box.d6 { border-radius: 26px; }
+.gdice-box.d20 { clip-path: polygon(50% 0, 100% 25%, 100% 75%, 50% 100%, 0 75%, 0 25%); }
+.gdice-box.coin { border-radius: 50%; font-size: 2.2rem; text-transform: uppercase; letter-spacing: .04em; }
+.gdice-box.rolling { animation: gdice-roll .25s linear infinite; }
+.gdice-box.done { animation: gdice-pop .35s cubic-bezier(.2, 1.6, .4, 1); }
+.gdice-text { margin: 0; padding: 8px 16px; border-radius: 99px; background: var(--panel); border: 1px solid var(--border); color: var(--text); font-size: 1.05rem; box-shadow: 0 10px 30px rgba(0, 0, 0, .4); }
+.gdice-text strong { color: var(--accent); }
+@keyframes gdice-in { from { opacity: 0; } }
+@keyframes gdice-roll { 0% { transform: rotate(0) scale(1); } 50% { transform: rotate(180deg) scale(.9); } 100% { transform: rotate(360deg) scale(1); } }
+@keyframes gdice-pop { from { transform: scale(.6); } }
+@media (prefers-reduced-motion: reduce) { .gdice, .gdice-box.rolling, .gdice-box.done { animation: none; } }

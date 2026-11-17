@@ -3,21 +3,14 @@ import { game, useGame } from '../../../features/game/store'
 import type { LogEntry } from '../../../features/game/types'
 import { safeImg } from '../../../features/game/util'
 
-/** Registro de la partida y chat (se puede ocultar). */
+/** Columna derecha (se puede ocultar): arriba el registro de la partida y abajo el chat. */
 export function Side() {
   const room = useGame((s) => s.room)
   const save = useGame((s) => s.save)
   const log = useGame((s) => s.log)
-  const hidden = useGame((s) => s.sideHidden)
-  const listRef = useRef<HTMLOListElement>(null)
-  const atEnd = useRef(true)
   const [text, setText] = useState('')
-
-  // Baja al final con cada mensaje nuevo, salvo si se está leyendo más arriba.
-  useLayoutEffect(() => {
-    const list = listRef.current
-    if (list && atEnd.current) list.scrollTop = list.scrollHeight
-  }, [log, hidden])
+  const actions = log.filter((e) => e.kind !== 'chat')
+  const chat = log.filter((e) => e.kind === 'chat')
 
   function send(ev: FormEvent) {
     ev.preventDefault()
@@ -38,26 +31,52 @@ export function Side() {
           ✕
         </button>
       </div>
-      <ol
-        className="glog"
-        ref={listRef}
-        aria-live="polite"
-        onScroll={(e) => {
-          const l = e.currentTarget
-          atEnd.current = l.scrollHeight - l.scrollTop - l.clientHeight < 60
-        }}
-      >
-        {log.map((e) => (
-          <LogLine key={e.id} e={e} />
-        ))}
-      </ol>
-      <form className="gchat" onSubmit={send}>
-        <input className="pinput" type="text" maxLength={300} placeholder="Escribe un mensaje…" aria-label="Mensaje para la mesa" value={text} onChange={(e) => setText(e.target.value)} />
-        <button type="submit" className="plain small">
-          Enviar
-        </button>
-      </form>
+
+      <section className="gpane glog-pane" aria-label="Registro de la partida">
+        <h3 className="gpane-h">Registro</h3>
+        <AutoList entries={actions} empty="Aún no ha pasado nada." />
+      </section>
+
+      <section className="gpane gchat-pane" aria-label="Chat">
+        <h3 className="gpane-h">Chat</h3>
+        <AutoList entries={chat} empty="Nadie ha escrito todavía." />
+        <form className="gchat" onSubmit={send}>
+          <input className="pinput" type="text" maxLength={300} placeholder="Escribe un mensaje…" aria-label="Mensaje para la mesa" value={text} onChange={(e) => setText(e.target.value)} />
+          <button type="submit" className="plain small">
+            Enviar
+          </button>
+        </form>
+      </section>
     </aside>
+  )
+}
+
+/** Lista que baja sola al final con cada línea nueva, salvo si se está leyendo más arriba. */
+function AutoList({ entries, empty }: { entries: LogEntry[]; empty: string }) {
+  const ref = useRef<HTMLOListElement>(null)
+  const atEnd = useRef(true)
+  const hidden = useGame((s) => s.sideHidden)
+
+  useLayoutEffect(() => {
+    const list = ref.current
+    if (list && atEnd.current) list.scrollTop = list.scrollHeight
+  }, [entries.length, hidden])
+
+  return (
+    <ol
+      className="glog"
+      ref={ref}
+      aria-live="polite"
+      onScroll={(e) => {
+        const l = e.currentTarget
+        atEnd.current = l.scrollHeight - l.scrollTop - l.clientHeight < 60
+      }}
+    >
+      {entries.map((e) => (
+        <LogLine key={e.id} e={e} />
+      ))}
+      {!entries.length && <li className="glog-empty">{empty}</li>}
+    </ol>
   )
 }
 
