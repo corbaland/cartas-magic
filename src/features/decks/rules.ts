@@ -12,6 +12,7 @@ export type SectionKey =
   | 'artefactos'
   | 'instantaneos'
   | 'encantamientos'
+  | 'planeswalkers'
   | 'tierras'
   | 'tokens'
 
@@ -47,6 +48,7 @@ export const SECTIONS: { key: SectionKey; label: string }[] = [
   { key: 'artefactos', label: 'Artefactos' },
   { key: 'instantaneos', label: 'Instantáneos' },
   { key: 'encantamientos', label: 'Encantamientos' },
+  { key: 'planeswalkers', label: 'Planeswalkers' },
   { key: 'tierras', label: 'Tierras' },
   { key: 'tokens', label: 'Tokens' },
 ]
@@ -67,11 +69,27 @@ export function sectionFor(card: Card): SectionKey {
   if (/token|emblem/.test(card.layout || '') || /\bToken\b/.test(t)) return 'tokens'
   if (/\bCreature\b/.test(t)) return 'criaturas'
   if (/\bLand\b/.test(t)) return 'tierras'
+  if (/\bPlaneswalker\b/.test(t)) return 'planeswalkers'
   if (/\bInstant\b/.test(t)) return 'instantaneos'
   if (/\bSorcery\b/.test(t)) return 'hechizos'
   if (/\bArtifact\b/.test(t)) return 'artefactos'
   if (/\bEnchantment\b/.test(t)) return 'encantamientos'
-  return 'hechizos' // planeswalkers y batallas no tienen sección propia
+  return 'hechizos' // las batallas no tienen sección propia
+}
+
+/**
+ * Los mazos guardados antes de existir la sección Planeswalkers los tienen en Hechizos:
+ * se pasan a su sección al cargarlos. Devuelve el mismo mazo si no hay nada que cambiar.
+ */
+export function normalizeDeck(deck: Deck): Deck {
+  const fix = (c: DeckCard) => c.sec !== 'tokens' && c.home === 'hechizos' && /\bPlaneswalker\b/.test(c.type || '')
+  if (!deck.cards.some(fix)) return deck
+  return {
+    ...deck,
+    cards: deck.cards.map((c) =>
+      fix(c) ? { ...c, home: 'planeswalkers' as const, sec: c.sec === 'comandante' ? c.sec : ('planeswalkers' as const) } : c,
+    ),
+  }
 }
 
 export function canCommand(card: Card): boolean {

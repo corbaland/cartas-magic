@@ -1,7 +1,7 @@
 import { create } from 'zustand'
 import { sb } from '../../api/supabase'
 import { useAuth } from '../../auth/useAuth'
-import { newDeckId, type Deck, type Result } from './rules'
+import { newDeckId, normalizeDeck, type Deck, type Result } from './rules'
 
 /*
  * Los mazos del usuario, guardados en Supabase (tabla «decks»).
@@ -172,6 +172,11 @@ async function load(userId: string | null) {
     }
   }
 
+  // Planeswalkers guardados en Hechizos (de antes de tener sección propia): se recolocan y se guardan.
+  const fixed = decks.map(normalizeDeck)
+  const changed = fixed.filter((d, i) => d !== decks[i])
+  decks = fixed
+
   useDecks.setState({
     decks,
     currentId: decks[0]?.id ?? null,
@@ -182,6 +187,7 @@ async function load(userId: string | null) {
         : 'Guardado en tu cuenta.',
     },
   })
+  changed.forEach((d) => queueSave(d.id))
 }
 
 // Al entrar o salir de la cuenta, se cargan (o se vacían) los mazos.
