@@ -1352,6 +1352,7 @@
     ['artefactos', 'Artefactos'],
     ['instantaneos', 'Instantáneos'],
     ['encantamientos', 'Encantamientos'],
+    ['planeswalkers', 'Planeswalkers'],
     ['tierras', 'Tierras'],
     ['tokens', 'Tokens']
   ];
@@ -1429,11 +1430,26 @@
     if (/token|emblem/.test(card.layout || '') || /\bToken\b/.test(t)) return 'tokens';
     if (/\bCreature\b/.test(t)) return 'criaturas';
     if (/\bLand\b/.test(t)) return 'tierras';
+    if (/\bPlaneswalker\b/.test(t)) return 'planeswalkers';
     if (/\bInstant\b/.test(t)) return 'instantaneos';
     if (/\bSorcery\b/.test(t)) return 'hechizos';
     if (/\bArtifact\b/.test(t)) return 'artefactos';
     if (/\bEnchantment\b/.test(t)) return 'encantamientos';
-    return 'hechizos';   // planeswalkers y batallas no tienen sección propia
+    return 'hechizos';   // las batallas no tienen sección propia
+  }
+
+  // Los planeswalkers guardados antes de tener sección propia están en Hechizos:
+  // se pasan a su sección. Devuelve true si ha cambiado algo.
+  function fixPlaneswalkers(deck) {
+    var changed = false;
+    deck.cards.forEach(function (c) {
+      if (c.sec !== 'tokens' && c.home === 'hechizos' && /\bPlaneswalker\b/.test(c.type || '')) {
+        c.home = 'planeswalkers';
+        if (c.sec !== 'comandante') c.sec = 'planeswalkers';
+        changed = true;
+      }
+    });
+    return changed;
   }
 
   function canCommand(card) {
@@ -2208,6 +2224,8 @@
     }
 
     decks = cloud;
+    decks.forEach(function (d) { if (fixPlaneswalkers(d)) dirty[d.id] = true; });
+    if (Object.keys(dirty).length) queueSave(null);
     currentId = decks.length ? decks[0].id : null;
     if (moved) storeNote((moved === 1 ? 'Se ha pasado 1 mazo' : 'Se han pasado ' + moved + ' mazos') + ' de este navegador a tu cuenta.');
     else storeNote('Guardado en tu cuenta.');
