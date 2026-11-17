@@ -21,7 +21,7 @@ export const router = createHashRouter([
       { path: 'cartas', lazy: async () => ({ Component: (await import('../pages/cartas/CartasPage')).CartasPage }) },
       { path: 'mazos', lazy: async () => ({ Component: (await import('../pages/mazos/MazosPage')).MazosPage }) },
       { path: 'jugar', element: <PendientePage seccion="Jugar" ancla="jugar" /> },
-      { path: 'admin', element: <PendientePage seccion="Admin" ancla="admin" /> },
+      { path: 'admin', lazy: async () => ({ Component: (await import('../pages/admin/AdminPage')).AdminPage }) },
       { path: '*', loader: () => redirect('/') },
     ],
   },
