@@ -812,6 +812,7 @@
 <dialog id="authDlg" aria-labelledby="authTitle">
   <form id="authForm" class="auth" novalidate>
     <h2 id="authTitle">Tu cuenta</h2>
+    <p id="authInfo" class="note" hidden></p>
     <div class="tabs" role="tablist" aria-label="Entrar o crear cuenta">
       <button id="tabLogin" type="button" role="tab" aria-selected="true">Entrar</button>
       <button id="tabSignup" type="button" role="tab" aria-selected="false">Crear cuenta</button>
@@ -2286,11 +2287,14 @@
   $tabLogin.addEventListener('click', function () { setAuthMode('login'); });
   $tabSignup.addEventListener('click', function () { setAuthMode('signup'); });
 
-  function openAuth(mode) {
+  function openAuth(mode, info) {
     if (!sb) return;
     $authForm.reset();
     setAuthMode(mode);
-    $authDlg.showModal();
+    var $info = document.getElementById('authInfo');
+    $info.textContent = info || '';
+    $info.hidden = !info;
+    if (!$authDlg.open) $authDlg.showModal();
     $authUser.focus();
   }
 
@@ -2572,7 +2576,8 @@
     profile: function () { return profile; },
     isAdmin: isAdmin,
     decks: function () { return decks; },
-    route: route
+    route: route,
+    login: function (info) { openAuth('login', info); }
   };
 
   // Si un símbolo decorativo no carga, se quita en vez de dejar el icono roto.
