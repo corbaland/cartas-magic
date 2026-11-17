@@ -43,12 +43,12 @@ export const LIMIT = 100
 /** Orden en que se muestran. Los tokens no cuentan para el límite. */
 export const SECTIONS: { key: SectionKey; label: string }[] = [
   { key: 'comandante', label: 'Comandante' },
+  { key: 'planeswalkers', label: 'Planeswalkers' },
   { key: 'criaturas', label: 'Criaturas' },
   { key: 'hechizos', label: 'Hechizos' },
   { key: 'artefactos', label: 'Artefactos' },
   { key: 'instantaneos', label: 'Instantáneos' },
   { key: 'encantamientos', label: 'Encantamientos' },
-  { key: 'planeswalkers', label: 'Planeswalkers' },
   { key: 'tierras', label: 'Tierras' },
   { key: 'tokens', label: 'Tokens' },
 ]
