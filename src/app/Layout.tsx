@@ -2,6 +2,7 @@ import { NavLink, Outlet, Link } from 'react-router'
 import { CardZoom } from '../components/CardZoom'
 import { AccountArea } from '../auth/AccountArea'
 import { AuthDialog } from '../auth/AuthDialog'
+import { Toast } from '../components/Toast'
 import { useAuth, useIsAdmin } from '../auth/useAuth'
 import './Layout.css'
 
@@ -50,6 +51,7 @@ export function Layout() {
 
       <CardZoom />
       <AuthDialog />
+      <Toast />
     </>
   )
 }

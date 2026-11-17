@@ -50,6 +50,7 @@ body {
   align-items: center;
 }
 .page { max-width: 1300px; margin: 0 auto; padding: 16px; }
+.admin-title { margin: 8px 0 4px; font-size: 1.6rem; }
 .note { margin: 10px 0 0; color: var(--muted); font-size: .8rem; }
 .note.bad { color: var(--danger); }
 
