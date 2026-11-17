@@ -603,6 +603,40 @@
   .auth .actions { display: flex; justify-content: flex-end; gap: 10px; }
   .note.bad { color: var(--danger); }
   #deckGate .deck-empty { max-width: 560px; margin: 24px auto; }
+
+  /* ---------- Menú de mazos ---------- */
+  .gallery-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 18px; }
+  .deck-gallery { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 22px 18px; margin: 0; padding: 0; list-style: none; }
+  .deck-gallery[hidden] { display: none; }
+  .deck-box { display: flex; flex-direction: column; gap: 6px; width: 100%; padding: 0; border: 0; background: none; color: inherit; font: inherit; text-align: left; cursor: pointer; }
+  .deck-cover {
+    position: relative;
+    display: grid;
+    place-items: center;
+    aspect-ratio: 488 / 680;
+    overflow: hidden;
+    border-radius: 4.75% / 3.5%;
+    background:
+      radial-gradient(circle at 50% 50%, rgba(255, 233, 168, .5) 0 5%, transparent 6%),
+      repeating-linear-gradient(45deg, rgba(255, 255, 255, .04) 0 6px, transparent 6px 12px),
+      linear-gradient(160deg, #4a2a12, #22140a);
+    box-shadow: 0 4px 14px rgba(0, 0, 0, .35), inset 0 0 0 3px #1a0f07, inset 0 0 0 5px rgba(224, 165, 38, .45);
+    transition: transform .12s ease, box-shadow .12s ease;
+  }
+  .deck-cover img { width: 100%; height: 100%; display: block; object-fit: cover; }
+  .deck-box:hover .deck-cover, .deck-box:focus-visible .deck-cover { transform: translateY(-4px) scale(1.02); box-shadow: 0 12px 26px rgba(0, 0, 0, .45), 0 0 0 2px var(--accent); }
+  .deck-box:focus-visible { outline: none; }
+  .deck-nocmd { padding: 6px 12px; border-radius: 99px; background: rgba(0, 0, 0, .55); color: #ffe9a8; font-size: .85rem; font-weight: 600; }
+  .deck-title { font-weight: 700; font-size: 1rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .deck-meta { color: var(--muted); font-size: .82rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .deck-meta.full { color: var(--good); }
+  .deck-new .deck-cover { background: var(--panel); box-shadow: none; border: 2px dashed var(--border); }
+  .deck-new .deck-cover span { color: var(--muted); font-size: 3rem; line-height: 1; }
+  .deck-new:hover .deck-cover { border-color: var(--accent); box-shadow: none; }
+  .deck-new:hover .deck-cover span { color: var(--accent); }
+  .back-link { display: inline-block; margin: 0 0 12px; padding: 0; border: 0; background: none; color: var(--accent); font: inherit; font-size: .9rem; font-weight: 600; cursor: pointer; }
+  .back-link:hover { text-decoration: underline; }
+  @media (prefers-reduced-motion: reduce) { .deck-cover { transition: none; } }
   .gate-btns { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; }
   .gate-btns[hidden] { display: none; }
 
@@ -714,8 +748,20 @@
     </div>
   </div>
 </div>
+<div id="deckGallery" class="page" hidden>
+  <div class="gallery-head">
+    <h1 class="admin-title">Mis mazos</h1>
+    <button id="galleryNew" class="plain primary" type="button">+ Nuevo mazo</button>
+  </div>
+  <div id="galleryEmpty" class="deck-empty" hidden>
+    <p>Aún no tienes ningún mazo.</p>
+    <button id="galleryFirst" class="plain" type="button">Crear mi primer mazo</button>
+  </div>
+  <ul id="galleryList" class="deck-gallery"></ul>
+</div>
 <div id="deckArea" class="page decks" hidden>
   <aside class="deck-side">
+    <button id="deckBack" class="back-link" type="button">← Todos los mazos</button>
     <div class="side-head">
       <h2>Mis mazos</h2>
       <button id="deckNew" class="plain" type="button">+ Nuevo mazo</button>
@@ -1347,6 +1393,7 @@
   // Orden en que se muestran. Los tokens no cuentan para el límite.
   var SECTIONS = [
     ['comandante', 'Comandante'],
+    ['planeswalkers', 'Planeswalkers'],
     ['criaturas', 'Criaturas'],
     ['hechizos', 'Hechizos'],
     ['artefactos', 'Artefactos'],
@@ -1429,11 +1476,26 @@
     if (/token|emblem/.test(card.layout || '') || /\bToken\b/.test(t)) return 'tokens';
     if (/\bCreature\b/.test(t)) return 'criaturas';
     if (/\bLand\b/.test(t)) return 'tierras';
+    if (/\bPlaneswalker\b/.test(t)) return 'planeswalkers';
     if (/\bInstant\b/.test(t)) return 'instantaneos';
     if (/\bSorcery\b/.test(t)) return 'hechizos';
     if (/\bArtifact\b/.test(t)) return 'artefactos';
     if (/\bEnchantment\b/.test(t)) return 'encantamientos';
-    return 'hechizos';   // planeswalkers y batallas no tienen sección propia
+    return 'hechizos';   // las batallas no tienen sección propia
+  }
+
+  // Los planeswalkers guardados antes de tener sección propia están en Hechizos:
+  // se pasan a su sección. Devuelve true si ha cambiado algo.
+  function fixPlaneswalkers(deck) {
+    var changed = false;
+    deck.cards.forEach(function (c) {
+      if (c.sec !== 'tokens' && c.home === 'hechizos' && /\bPlaneswalker\b/.test(c.type || '')) {
+        c.home = 'planeswalkers';
+        if (c.sec !== 'comandante') c.sec = 'planeswalkers';
+        changed = true;
+      }
+    });
+    return changed;
   }
 
   function canCommand(card) {
@@ -1585,9 +1647,74 @@
     return li;
   }
 
+  /* Menú de mazos: al entrar en Mazos se ven todos, con la carta del comandante. */
+  var showGallery = true;
+  var $deckGallery = document.getElementById('deckGallery');
+  var $galleryList = document.getElementById('galleryList');
+  var $galleryEmpty = document.getElementById('galleryEmpty');
+
+  function openDeck(id) {
+    currentId = id;
+    showGallery = false;
+    $addQ.value = '';
+    $addResults.textContent = '';
+    say('');
+    renderDecks();
+    window.scrollTo(0, 0);
+  }
+
+  function showDeckMenu() {
+    showGallery = true;
+    renderDecks();
+    window.scrollTo(0, 0);
+  }
+
+  function renderGallery() {
+    $galleryList.textContent = '';
+    $galleryEmpty.hidden = decks.length > 0;
+    $galleryList.hidden = !decks.length;
+    decks.forEach(function (d) {
+      var cmd = d.cards.find(function (c) { return c.sec === 'comandante'; });
+      var n = countCards(d);
+      var li = el('li');
+      var b = el('button', 'deck-box');
+      b.type = 'button';
+      b.title = 'Abrir «' + (d.name || 'Mazo sin nombre') + '»';
+      var cover = el('span', 'deck-cover');
+      if (cmd && cmd.img) {
+        var im = el('img');
+        im.loading = 'lazy';
+        im.alt = '';
+        im.src = cmd.img.replace('/small/', '/normal/');
+        cover.appendChild(im);
+      } else {
+        cover.appendChild(el('span', 'deck-nocmd', 'Sin comandante'));
+      }
+      b.appendChild(cover);
+      b.appendChild(el('span', 'deck-title', d.name || 'Mazo sin nombre'));
+      b.appendChild(el('span', 'deck-meta' + (n >= LIMIT ? ' full' : ''), n + '/' + LIMIT + ' cartas' + (cmd ? ' · ' + cmd.name : '')));
+      b.addEventListener('click', function () { openDeck(d.id); });
+      li.appendChild(b);
+      $galleryList.appendChild(li);
+    });
+    if (decks.length) {
+      var li2 = el('li');
+      var add = el('button', 'deck-box deck-new');
+      add.type = 'button';
+      var cv = el('span', 'deck-cover');
+      cv.appendChild(el('span', null, '+'));
+      add.appendChild(cv);
+      add.appendChild(el('span', 'deck-title', 'Nuevo mazo'));
+      add.addEventListener('click', newDeck);
+      li2.appendChild(add);
+      $galleryList.appendChild(li2);
+    }
+  }
+
   function renderDecks() {
     renderGate();
     if (!user) return;
+    if (showGallery) { renderGallery(); return; }
     $deckList.textContent = '';
     decks.forEach(function (d) {
       var li = el('li');
@@ -1670,6 +1797,7 @@
     };
     decks.push(deck);
     currentId = deck.id;
+    showGallery = false;
     $addQ.value = '';
     $addResults.textContent = '';
     commit('');
@@ -1679,6 +1807,9 @@
 
   document.getElementById('deckNew').addEventListener('click', newDeck);
   document.getElementById('deckFirst').addEventListener('click', newDeck);
+  document.getElementById('galleryNew').addEventListener('click', newDeck);
+  document.getElementById('galleryFirst').addEventListener('click', newDeck);
+  document.getElementById('deckBack').addEventListener('click', showDeckMenu);
 
   $deckName.addEventListener('input', function () {
     var deck = currentDeck();
@@ -1693,6 +1824,7 @@
     if (!window.confirm('¿Eliminar el mazo «' + (deck.name || 'Mazo sin nombre') + '»? No se puede deshacer.')) return;
     decks.splice(decks.indexOf(deck), 1);
     currentId = decks.length ? decks[0].id : null;
+    showGallery = true;   // tras borrar, de vuelta al menú de mazos
     $addQ.value = '';
     $addResults.textContent = '';
     if (user) {
@@ -1969,7 +2101,7 @@
 
   var ZOOM_DELAY = 1000;   // milisegundos con el ratón quieto sobre la carta
   var ZOOM_FAST = 120;     // en la mesa de juego, casi al instante
-  var ZOOMABLE = '.card img, .tile .art, .pick img, .arts button, .gcard img, .glog-cards img, .gv-pick img';
+  var ZOOMABLE = '.card img, .deck-cover img, .tile .art, .pick img, .arts button, .gcard img, .glog-cards img, .gv-pick img';
   var $zoom = document.getElementById('zoom');
   var $zoomImg = $zoom.querySelector('img');
   var canHover = window.matchMedia('(hover: hover)');
@@ -2106,7 +2238,8 @@
   // Sin cuenta no hay mazos: se muestra una invitación a entrar.
   function renderGate() {
     $deckGate.hidden = !!user;
-    $deckArea.hidden = !user;
+    $deckArea.hidden = !user || showGallery;
+    $deckGallery.hidden = !user || !showGallery;
     if (user) return;
     var btns = $deckGate.querySelector('.gate-btns');
     if (!sb) {
@@ -2208,6 +2341,8 @@
     }
 
     decks = cloud;
+    decks.forEach(function (d) { if (fixPlaneswalkers(d)) dirty[d.id] = true; });
+    if (Object.keys(dirty).length) queueSave(null);
     currentId = decks.length ? decks[0].id : null;
     if (moved) storeNote((moved === 1 ? 'Se ha pasado 1 mazo' : 'Se han pasado ' + moved + ' mazos') + ' de este navegador a tu cuenta.');
     else storeNote('Guardado en tu cuenta.');
@@ -2558,7 +2693,7 @@
       else a.removeAttribute('aria-current');
     });
     if (name === 'cartas' && !cardsLoaded) { cardsLoaded = true; load(true); }
-    if (name === 'mazos') renderDecks();
+    if (name === 'mazos') { showGallery = true; renderDecks(); }
     if (name === 'admin') loadAdmin();
     if (window.Juego) {
       if (name === 'jugar') window.Juego.show();
