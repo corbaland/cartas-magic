@@ -170,10 +170,53 @@
 
   /* ---------- Acceso a la sección ---------- */
 
-  // De momento: el administrador y quien tenga una invitación o esté en una sala.
+  // Cualquiera con cuenta puede entrar para unirse a salas (con código, enlace o invitación).
+  // De momento, crear salas y practicar en solitario es solo para el administrador.
   function allowed() {
-    return !!myId() && (CM.isAdmin() || S.rooms.length > 0 || S.invites.length > 0);
+    return !!myId();
   }
+
+  function canHost() {
+    return CM.isAdmin();
+  }
+
+  /* ---------- Enlace de invitación: …/#unirse=CODIGO ---------- */
+
+  var JOIN_LINK = /^#unirse=([A-Za-z0-9]{6})$/;
+
+  function joinLink(code) {
+    return location.origin + location.pathname + '#unirse=' + code;
+  }
+
+  function checkJoinLink() {
+    var m = JOIN_LINK.exec(location.hash);
+    if (!m) return;
+    S.joinCode = m[1].toUpperCase();
+    history.replaceState(null, '', location.pathname + location.search + '#jugar');
+    CM.route();
+    if (myId()) joinByLink();
+    else if (S.authKnown) askLogin();
+  }
+
+  function askLogin() {
+    var msg = 'Te han invitado a la sala ' + S.joinCode + '. Entra en tu cuenta o crea una («Crear cuenta») para unirte.';
+    if (CM.login) CM.login(msg);
+    else toast(msg);
+  }
+
+  async function joinByLink() {
+    var code = S.joinCode;
+    if (!code) return;
+    S.joinCode = null;
+    var r = await sb.rpc('join_room', { room_code: code });
+    if (r.error) { toast(errText(r.error), true); return; }
+    if (location.hash !== '#jugar') location.hash = '#jugar';
+    else CM.route();
+    toast('Te has unido a la sala.');
+    openRoom(r.data);
+  }
+
+  window.addEventListener('hashchange', checkJoinLink);
 
   function updateNav() {
     navJugar.hidden = !allowed();
@@ -182,6 +225,11 @@
   }
 
   document.addEventListener('cm:auth', function () {
+    S.authKnown = true;
+    if (S.joinCode) {
+      if (myId()) joinByLink();
+      else askLogin();
+    }
     if (!myId()) {
       stopRoom();
       if (S.homeChannel) { sb.removeChannel(S.homeChannel); S.homeChannel = null; }
@@ -255,12 +303,17 @@
     root.textContent = '';
     var page = el('div', 'page play-home');
     page.appendChild(el('h1', 'admin-title', 'Jugar'));
-    page.appendChild(el('p', 'note', 'Partidas de Commander en tiempo real con tus amigos. De momento solo ven esta sección el administrador y quien reciba una invitación.'));
+    page.appendChild(el('p', 'note', canHost()
+      ? 'Partidas de Commander en tiempo real con tus amigos. Crea una sala y pásales el enlace o el código, o invítalos por su nombre de usuario.'
+      : 'Partidas de Commander en tiempo real con tus amigos. Únete a una sala con el código o el enlace que te pasen, o aceptando una invitación.'));
     if (S.homeMsg) page.appendChild(el('p', 'note bad', S.homeMsg));
+    if (!CM.decks().length) {
+      page.appendChild(el('p', 'note', 'Para jugar necesitas al menos un mazo: créalo o impórtalo en la sección Mazos.'));
+    }
 
     var grid = el('div', 'play-grid');
 
-    // Crear sala
+    // Crear sala (de momento, solo el administrador)
     var create = el('section', 'play-box');
     create.appendChild(el('h2', null, 'Crear sala'));
     var name = input('text', 'Sala de ' + myName(), 60);
@@ -283,7 +336,7 @@
       }
       openRoom(r.data);
     }));
-    grid.appendChild(create);
+    if (canHost()) grid.appendChild(create);
 
     // Unirse
     var join = el('section', 'play-box');
@@ -313,7 +366,7 @@
       if (!deck) { toast('Elige un mazo. Si no tienes, créalo en la sección Mazos.', true); return; }
       practice(deck);
     }));
-    grid.appendChild(solo);
+    if (canHost()) grid.appendChild(solo);
     page.appendChild(grid);
 
     // Invitaciones
@@ -532,9 +585,17 @@
     var codeRow = el('p', 'play-code');
     codeRow.appendChild(document.createTextNode('Código de la sala: '));
     codeRow.appendChild(el('strong', null, r.code));
-    codeRow.appendChild(button('Copiar', 'plain small', async function () {
+    codeRow.appendChild(button('Copiar código', 'plain small', async function () {
       try { await navigator.clipboard.writeText(r.code); toast('Código copiado.'); } catch (e) { toast('No se ha podido copiar.', true); }
     }));
+    if (r.status === 'lobby') {
+      codeRow.appendChild(button('Copiar enlace de invitación', 'plain small primary', async function () {
+        try {
+          await navigator.clipboard.writeText(joinLink(r.code));
+          toast('Enlace copiado. Pásaselo a tus amigos: al abrirlo con su cuenta entran en la sala.');
+        } catch (e) { toast('No se ha podido copiar. El enlace es: ' + joinLink(r.code), true); }
+      }));
+    }
     page.appendChild(codeRow);
 
     // Jugadores
@@ -589,7 +650,7 @@
     });
     who.addEventListener('keydown', function (ev) { if (ev.key === 'Enter') invBtn.click(); });
     invBox.appendChild(invBtn);
-    invBox.appendChild(el('p', 'note', 'También pueden unirse con el código de la sala.'));
+    invBox.appendChild(el('p', 'note', 'También pueden unirse con el enlace de invitación o escribiendo el código en Jugar → «Unirse con código».'));
     page.appendChild(invBox);
 
     // Acciones
@@ -2106,5 +2167,6 @@
     cardMenu(n.dataset.iid, n.dataset.zone, ev.clientX, ev.clientY);
   });
 
-  window.Juego = { allowed: allowed, show: show, hide: hide, practice: practice };  if (!document.getElementById('view-jugar').hidden) show();
+  window.Juego = { allowed: allowed, show: show, hide: hide, practice: practice };
+  checkJoinLink();  if (!document.getElementById('view-jugar').hidden) show();
 })();
