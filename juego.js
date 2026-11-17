@@ -61,7 +61,10 @@
     poll: null,
     lastTurnKey: null,
     tableError: '',
-    saveState: ''
+    saveState: '',
+    view: null,          // id del jugador cuya mesa se mira (null = la mía)
+    sideHidden: false,   // registro y chat ocultos
+    unread: 0            // mensajes de chat llegados con el chat oculto
   };
 
   /* ---------- Utilidades ---------- */
@@ -630,6 +633,8 @@
     S.others = {};
     S.log = [];
     S.logIds = {};
+    S.view = null;
+    S.unread = 0;
     S.pub = S.priv = null;
     S.tableError = '';
     render();
@@ -678,6 +683,8 @@
     S.others = {};
     S.log = [];
     S.logIds = {};
+    S.view = null;
+    S.unread = 0;
     S.tableError = '';
     S.screen = 'table';
     S.lastTurnKey = turnKey();
@@ -808,6 +815,10 @@
     if (outOfOrder) S.log.sort(function (a, b) { return a.id - b.id; });
     if (S.log.length > 300) S.log.splice(0, S.log.length - 300);
     if (quiet) return;
+    if (S.sideHidden && e.kind === 'chat' && e.user_id && e.user_id !== myId()) {
+      S.unread++;
+      renderSeats();
+    }
     if (outOfOrder) renderLog();
     else appendLog(e);
   }
@@ -841,7 +852,7 @@
     var y = /\bLand\b/.test(t) ? 64 : /\bCreature\b/.test(t) ? 4 : 34;
     var row = S.pub.zones.battlefield.filter(function (c) { return c.y >= y && c.y < y + 20; });
     var slot = row.length;
-    return { x: 3 + (slot % 12) * 7.8, y: y + Math.floor(slot / 12) * 6 };
+    return { x: 3 + (slot % 9) * 10.5, y: y + Math.floor(slot / 9) * 6 };
   }
 
   function moveCard(iid, to, opts) {
@@ -1317,23 +1328,32 @@
       root.appendChild(el('div', 'page note', 'Preparando la mesa…'));
       return;
     }
-    var t = el('div', 'gtable');
+    var t = el('div', 'gtable' + (S.sideHidden ? ' noside' : ''));
+    t.id = 'gTable';
     var main = el('div', 'gmain');
-    var opps = el('div', 'gopps');
-    opps.id = 'gOpps';
+    var board = el('div', 'gboard');
+    board.id = 'gBoard';
     var mine = el('div', 'gme');
     mine.id = 'gMine';
-    main.appendChild(opps);
+    main.appendChild(board);
     main.appendChild(mine);
     t.appendChild(main);
 
+    var seats = el('div', 'gseats');
+    seats.id = 'gSeats';
+    seats.setAttribute('role', 'navigation');
+    seats.setAttribute('aria-label', 'Mesas de los jugadores');
+    t.appendChild(seats);
+
     var side = el('aside', 'gside');
+    side.id = 'gSide';
     var sh = el('div', 'gside-head');
     sh.appendChild(el('strong', null, S.room.name));
     var save = el('span', 'gsave');
     save.id = 'gSave';
     save.setAttribute('role', 'status');
     sh.appendChild(save);
+    sh.appendChild(button('✕', 'gside-x', toggleSide, 'Ocultar el registro y el chat'));
     side.appendChild(sh);
     var log = el('ol', 'glog');
     log.id = 'gLog';
@@ -1356,10 +1376,130 @@
     t.appendChild(side);
     root.appendChild(t);
 
-    renderOpps();
     renderMine();
+    renderOpps();
     renderLog();
     setSave(S.saveState);
+  }
+
+  /* ---------- Qué mesa se está mirando y el chat ---------- */
+
+  try { S.sideHidden = localStorage.getItem('cm-juego-chat') === 'oculto'; } catch (e) { S.sideHidden = false; }
+
+  function viewingMe() {
+    return !S.view || S.view === myId() || !S.players.some(function (p) { return p.user_id === S.view; });
+  }
+
+  function setView(uid) {
+    S.view = uid === myId() ? null : uid;
+    closeMenu();
+    renderBoard();
+    renderSeats();
+  }
+
+  function toggleSide() {
+    S.sideHidden = !S.sideHidden;
+    S.unread = 0;
+    try { localStorage.setItem('cm-juego-chat', S.sideHidden ? 'oculto' : 'visible'); } catch (e) { /* sin almacenamiento */ }
+    var t = document.getElementById('gTable');
+    if (t) t.classList.toggle('noside', S.sideHidden);
+    renderSeats();
+    if (!S.sideHidden) {
+      var list = document.getElementById('gLog');
+      if (list) list.scrollTop = list.scrollHeight;
+    }
+  }
+
+  // Columna de la derecha: una entrada por jugador con un mini plano de su campo.
+  function renderSeats() {
+    var box = document.getElementById('gSeats');
+    if (!box || !S.pub) return;
+    box.textContent = '';
+    var meId = myId();
+    var meRow = S.players.find(function (p) { return p.user_id === meId; }) || { user_id: meId, username: myName() };
+    box.appendChild(el('span', 'gseats-h', 'Mesas'));
+    [meRow].concat(opponents()).forEach(function (p) {
+      var me = p.user_id === meId;
+      var st = me ? S.pub : S.others[p.user_id];
+      var active = me ? viewingMe() : S.view === p.user_id;
+      var turn = S.room.turn_user === p.user_id;
+      var b = button(null, 'gseat' + (active ? ' on' : '') + (turn ? ' turn' : ''), function () { setView(p.user_id); },
+        me ? 'Ver tu mesa' : 'Ver la mesa de ' + p.username);
+      b.setAttribute('aria-pressed', active ? 'true' : 'false');
+      var top = el('span', 'gseat-top');
+      top.appendChild(el('strong', null, me ? 'Tu mesa' : p.username));
+      if (turn) top.appendChild(el('span', 'gturn', 'Turno'));
+      b.appendChild(top);
+      var mini = el('span', 'gmini');
+      ((st && st.zones && st.zones.battlefield) || []).forEach(function (c) {
+        var t = c.type || '';
+        var kind = c.fd ? 'fd' : /\bLand\b/.test(t) ? 'land' : /\bCreature\b/.test(t) ? 'crea' : 'other';
+        var m = el('i', 'gm-' + kind + (c.tapped ? ' tap' : ''));
+        m.style.left = clamp(Number(c.x) || 0, 0, 96) + '%';
+        m.style.top = clamp(Number(c.y) || 0, 0, 92) + '%';
+        mini.appendChild(m);
+      });
+      b.appendChild(mini);
+      var stats = el('span', 'gseat-st');
+      if (st && st.zones) {
+        stats.appendChild(el('span', 'glife' + (st.life <= 0 ? ' dead' : ''), '♥ ' + st.life));
+        if (st.poison) stats.appendChild(el('span', 'gpois', '☠ ' + st.poison));
+        stats.appendChild(el('span', 'gcount', 'Mano ' + (me ? S.priv.hand.length : (st.handCount || 0))));
+      } else {
+        stats.appendChild(el('span', 'gcount', 'Preparando…'));
+      }
+      b.appendChild(stats);
+      box.appendChild(b);
+    });
+    var chat = button(S.sideHidden ? 'Mostrar chat' : 'Ocultar chat', 'plain small gseat-chat', toggleSide,
+      S.sideHidden ? 'Mostrar el registro y el chat' : 'Ocultar el registro y el chat');
+    if (S.sideHidden && S.unread) chat.appendChild(el('span', 'gunread', String(S.unread)));
+    box.appendChild(chat);
+  }
+
+  // Zona grande: el campo de batalla de la mesa elegida.
+  function renderBoard() {
+    var box = document.getElementById('gBoard');
+    if (!box || !S.pub) return;
+    box.textContent = '';
+    if (viewingMe()) {
+      box.className = 'gboard';
+      var bf = el('div', 'gbf mine');
+      bf.dataset.drop = 'battlefield';
+      S.pub.zones.battlefield.forEach(function (c) { bf.appendChild(cardNode(c, { zone: 'battlefield', owner: true })); });
+      if (!S.pub.zones.battlefield.length) bf.appendChild(el('p', 'gbf-empty', 'Arrastra aquí cartas de tu mano para jugarlas'));
+      box.appendChild(bf);
+      return;
+    }
+    var p = S.players.find(function (x) { return x.user_id === S.view; });
+    var st = S.others[p.user_id];
+    var turn = S.room.turn_user === p.user_id;
+    box.className = 'gboard other' + (turn ? ' turn' : '');
+    var head = el('div', 'gopp-head');
+    head.appendChild(el('strong', null, 'Mesa de ' + p.username));
+    if (turn) head.appendChild(el('span', 'gturn', 'Su turno'));
+    if (st && st.zones) {
+      head.appendChild(el('span', 'glife' + (st.life <= 0 ? ' dead' : ''), '♥ ' + st.life));
+      if (st.poison) head.appendChild(el('span', 'gpois', '☠ ' + st.poison));
+      head.appendChild(el('span', 'gcount', 'Mano ' + (st.handCount || 0) + ' · Biblioteca ' + (st.libCount || 0)));
+      head.appendChild(zoneButton('Cementerio', p, 'graveyard'));
+      head.appendChild(zoneButton('Exilio', p, 'exile'));
+    }
+    head.appendChild(button('Volver a mi mesa', 'plain small gback-me', function () { setView(myId()); }));
+    box.appendChild(head);
+    if (!st || !st.zones) {
+      box.appendChild(el('p', 'note', 'Preparando su mesa…'));
+      return;
+    }
+    var body = el('div', 'gopp-body');
+    var cmd = el('div', 'gopp-cmd');
+    (st.zones.command || []).forEach(function (c) { cmd.appendChild(cardNode(c, { zone: 'command', uid: p.user_id })); });
+    if (st.zones.command && st.zones.command.length) body.appendChild(cmd);
+    var obf = el('div', 'gbf opp');
+    (st.zones.battlefield || []).forEach(function (c) { obf.appendChild(cardNode(c, { zone: 'battlefield', uid: p.user_id })); });
+    if (!(st.zones.battlefield || []).length) obf.appendChild(el('p', 'gbf-empty', 'Todavía no tiene cartas en el campo'));
+    body.appendChild(obf);
+    box.appendChild(body);
   }
 
   function opponents() {
@@ -1406,42 +1546,10 @@
     return n;
   }
 
+  // Cambios en las mesas de los demás: la columna de mesas y, si se está mirando una, esa mesa.
   function renderOpps() {
-    var box = document.getElementById('gOpps');
-    if (!box) return;
-    box.textContent = '';
-    var list = opponents();
-    box.dataset.count = String(list.length);
-    box.hidden = !list.length;
-    list.forEach(function (p) {
-      var st = S.others[p.user_id];
-      var sec = el('section', 'gopp' + (S.room.turn_user === p.user_id ? ' turn' : ''));
-      var head = el('div', 'gopp-head');
-      head.appendChild(el('strong', null, p.username));
-      if (S.room.turn_user === p.user_id) head.appendChild(el('span', 'gturn', 'Su turno'));
-      if (!st || !st.zones) {
-        sec.appendChild(head);
-        sec.appendChild(el('p', 'note', 'Preparando su mesa…'));
-        box.appendChild(sec);
-        return;
-      }
-      head.appendChild(el('span', 'glife' + (st.life <= 0 ? ' dead' : ''), '♥ ' + st.life));
-      if (st.poison) head.appendChild(el('span', 'gpois', '☠ ' + st.poison));
-      head.appendChild(el('span', 'gcount', 'Mano ' + (st.handCount || 0) + ' · Biblioteca ' + (st.libCount || 0)));
-      head.appendChild(zoneButton('Cementerio', p, 'graveyard'));
-      head.appendChild(zoneButton('Exilio', p, 'exile'));
-      sec.appendChild(head);
-
-      var body = el('div', 'gopp-body');
-      var cmd = el('div', 'gopp-cmd');
-      (st.zones.command || []).forEach(function (c) { cmd.appendChild(cardNode(c, { zone: 'command', uid: p.user_id })); });
-      body.appendChild(cmd);
-      var bf = el('div', 'gbf opp');
-      (st.zones.battlefield || []).forEach(function (c) { bf.appendChild(cardNode(c, { zone: 'battlefield', uid: p.user_id })); });
-      body.appendChild(bf);
-      sec.appendChild(body);
-      box.appendChild(sec);
-    });
+    renderSeats();
+    if (!viewingMe()) renderBoard();
   }
 
   function zoneButton(label, p, zone) {
@@ -1468,12 +1576,8 @@
     var myTurn = S.room.turn_user === myId();
     var host = S.room.host_id === myId();
 
-    // Campo de batalla
-    var bf = el('div', 'gbf mine');
-    bf.dataset.drop = 'battlefield';
-    S.pub.zones.battlefield.forEach(function (c) { bf.appendChild(cardNode(c, { zone: 'battlefield', owner: true })); });
-    if (!S.pub.zones.battlefield.length) bf.appendChild(el('p', 'gbf-empty', 'Arrastra aquí cartas de tu mano para jugarlas'));
-    box.appendChild(bf);
+    if (viewingMe()) renderBoard();
+    renderSeats();
 
     // Panel del jugador
     var panel = el('div', 'gpanel');
@@ -1516,15 +1620,31 @@
     panel.appendChild(acts);
     box.appendChild(panel);
 
-    // Zonas
+    // Zonas: clic en la biblioteca roba; clic derecho (o mantener pulsado) abre sus opciones.
+    var bottom = el('div', 'gbottom');
     var zones = el('div', 'gzones');
     var lib = el('button', 'gzone glib');
     lib.type = 'button';
     lib.dataset.drop = 'library';
+    lib.title = 'Clic: robar una carta · Clic derecho: más opciones';
+    lib.setAttribute('aria-label', 'Biblioteca, ' + plural(S.priv.library.length, 'carta', 'cartas') + '. Pulsa para robar; clic derecho para más opciones');
     lib.appendChild(el('div', 'gback'));
     lib.appendChild(el('span', 'gzone-n', String(S.priv.library.length)));
     lib.appendChild(el('span', 'gzone-l', 'Biblioteca'));
-    lib.addEventListener('click', function (ev) { libraryMenu(ev.clientX, ev.clientY); });
+    lib.addEventListener('click', function () {
+      if (drawCards(1)) commit('roba una carta.');
+    });
+    lib.addEventListener('contextmenu', function (ev) {
+      ev.preventDefault();
+      libraryMenu(ev.clientX, ev.clientY);
+    });
+    lib.addEventListener('keydown', function (ev) {
+      if (ev.key === 'ContextMenu' || (ev.shiftKey && ev.key === 'F10')) {
+        ev.preventDefault();
+        var r = lib.getBoundingClientRect();
+        libraryMenu(r.left, r.top);
+      }
+    });
     zones.appendChild(lib);
     zones.appendChild(pileZone('graveyard', 'Cementerio'));
     zones.appendChild(pileZone('exile', 'Exilio'));
@@ -1539,14 +1659,16 @@
     });
     cmd.appendChild(el('span', 'gzone-l', 'Mando'));
     zones.appendChild(cmd);
-    box.appendChild(zones);
+    bottom.appendChild(zones);
 
-    // Mano
+    // Mano (se puede reordenar arrastrando)
     var hand = el('div', 'ghand');
     hand.dataset.drop = 'hand';
+    hand.id = 'gHand';
     S.priv.hand.forEach(function (c) { hand.appendChild(cardNode(c, { zone: 'hand', owner: true })); });
     if (!S.priv.hand.length) hand.appendChild(el('p', 'gbf-empty', 'Mano vacía'));
-    box.appendChild(hand);
+    bottom.appendChild(hand);
+    box.appendChild(bottom);
   }
 
   function statBox(label, key, value, steps, alert) {
@@ -1827,28 +1949,80 @@
       document.body.appendChild(g);
       drag.ghost = g;
       drag.node.classList.add('dragging');
+      document.body.classList.add('gdragging');
     }
     drag.ghost.style.transform = 'translate(' + (ev.clientX - drag.offX) + 'px,' + (ev.clientY - drag.offY) + 'px)';
     var under = document.elementFromPoint(ev.clientX, ev.clientY);
     var target = under && under.closest('[data-drop]');
     document.querySelectorAll('.drop-over').forEach(function (x) { if (x !== target) x.classList.remove('drop-over'); });
     if (target) target.classList.add('drop-over');
+    markHandSlot(target && target.dataset.drop === 'hand' ? handSlot(ev.clientX) : -1);
   });
+
+  // Posición de la mano en la que caería la carta (sin contar la que se arrastra).
+  function handCards() {
+    var hand = document.getElementById('gHand');
+    return hand ? Array.prototype.filter.call(hand.querySelectorAll('.gcard'), function (n) { return !n.classList.contains('dragging'); }) : [];
+  }
+
+  function handSlot(x) {
+    var nodes = handCards();
+    var i = 0;
+    while (i < nodes.length) {
+      var r = nodes[i].getBoundingClientRect();
+      if (x < r.left + r.width / 2) break;
+      i++;
+    }
+    return i;
+  }
+
+  function markHandSlot(i) {
+    document.querySelectorAll('.gins-before, .gins-after').forEach(function (n) { n.classList.remove('gins-before', 'gins-after'); });
+    if (i < 0) return;
+    var nodes = handCards();
+    if (!nodes.length) return;
+    if (i < nodes.length) nodes[i].classList.add('gins-before');
+    else nodes[nodes.length - 1].classList.add('gins-after');
+  }
+
+  function placeInHand(iid, slot) {
+    var hand = S.priv.hand;
+    var from = hand.findIndex(function (c) { return c.iid === iid; });
+    if (from < 0) return false;
+    var card = hand.splice(from, 1)[0];
+    hand.splice(clamp(slot, 0, hand.length), 0, card);
+    return from !== slot;
+  }
+
+  function endDrag(d) {
+    document.body.classList.remove('gdragging');
+    markHandSlot(-1);
+    document.querySelectorAll('.drop-over').forEach(function (x) { x.classList.remove('drop-over'); });
+    if (d && d.ghost) d.ghost.remove();
+    if (d && d.node.isConnected) d.node.classList.remove('dragging');
+  }
 
   document.addEventListener('pointerup', function (ev) {
     if (!drag) return;
     var d = drag;
     drag = null;
     clearTimeout(d.long);
-    document.querySelectorAll('.drop-over').forEach(function (x) { x.classList.remove('drop-over'); });
-    if (!d.moved) { cardClick(d, ev); return; }
-    if (d.ghost) d.ghost.remove();
-    if (d.node.isConnected) d.node.classList.remove('dragging');
+    if (!d.moved) { endDrag(null); cardClick(d, ev); return; }
     var under = document.elementFromPoint(ev.clientX, ev.clientY);
     var target = under && under.closest('[data-drop]');
+    var slot = target && target.dataset.drop === 'hand' ? handSlot(ev.clientX) : -1;
+    endDrag(d);
     if (!target) return;
     var to = target.dataset.drop;
-    if (to === 'battlefield') {
+    if (to === 'hand') {
+      if (d.zone === 'hand') {
+        if (placeInHand(d.iid, slot)) commit(null);
+      } else {
+        doMove(d.iid, 'hand');
+        placeInHand(d.iid, slot);
+        commit(null);
+      }
+    } else if (to === 'battlefield') {
       var r = target.getBoundingClientRect();
       var x = clamp((ev.clientX - d.offX - r.left) / r.width * 100, 0, 94);
       var y = clamp((ev.clientY - d.offY - r.top) / r.height * 100, 0, 88);
@@ -1866,14 +2040,24 @@
   document.addEventListener('pointercancel', function () {
     if (!drag) return;
     clearTimeout(drag.long);
-    if (drag.ghost) drag.ghost.remove();
-    if (drag.node.isConnected) drag.node.classList.remove('dragging');
+    endDrag(drag);
     drag = null;
   });
 
+  // Doble clic: girar/enderezar en el campo, jugar desde la mano, lanzar el comandante.
+  var lastClick = { iid: null, t: 0 };
+
   function cardClick(d, ev) {
     if (d.inViewer) { cardMenu(d.iid, d.zone, ev.clientX, ev.clientY); return; }
-    if (d.zone === 'battlefield') { toggleTap(d.iid); return; }
+    var now = Date.now();
+    var dbl = lastClick.iid === d.iid && now - lastClick.t < 400;
+    lastClick = dbl ? { iid: null, t: 0 } : { iid: d.iid, t: now };
+    if (d.zone === 'battlefield' || d.zone === 'hand' || d.zone === 'command') {
+      if (!dbl) return;
+      if (d.zone === 'battlefield') toggleTap(d.iid);
+      else doMove(d.iid, 'battlefield');
+      return;
+    }
     if (d.zone === 'graveyard' || d.zone === 'exile') {
       var zone = d.zone;
       openViewer({
@@ -1922,6 +2106,5 @@
     cardMenu(n.dataset.iid, n.dataset.zone, ev.clientX, ev.clientY);
   });
 
-  window.Juego = { allowed: allowed, show: show, hide: hide, practice: practice };
-  if (!document.getElementById('view-jugar').hidden) show();
+  window.Juego = { allowed: allowed, show: show, hide: hide, practice: practice };  if (!document.getElementById('view-jugar').hidden) show();
 })();
